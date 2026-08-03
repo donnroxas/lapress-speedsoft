@@ -3,78 +3,69 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LA Press Speedsoft - Live Tournament Hub & Scores</title>
+  <title>LA Press Speedsoft - Tournament Portal</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-950 text-white p-4 max-w-xl mx-auto min-h-screen pb-20">
+<body class="bg-slate-950 text-white p-4 max-w-xl mx-auto min-h-screen pb-16 relative">
 
-  <div class="space-y-6">
-    <!-- Header -->
-    <div class="flex justify-between items-center pt-2">
-      <div class="space-y-0.5">
-        <h1 class="text-lg font-black tracking-wider uppercase text-yellow-400">LA PRESS SPEEDSOFT</h1>
-        <p class="text-xs text-slate-400">Live Tournament Hub & Scores</p>
+  <!-- Header -->
+  <header class="mb-6 border-b border-slate-800 pb-3 flex justify-between items-center">
+    <div>
+      <h1 class="text-lg font-black tracking-wider uppercase text-yellow-400">LA PRESS SPEEDSOFT</h1>
+      <p class="text-[11px] text-slate-400">Tournament Rooms Portal</p>
+    </div>
+    <button onclick="openCreateModal()" class="bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black text-xs px-3.5 py-2 rounded-xl transition shadow-lg shadow-yellow-400/10 cursor-pointer">
+      + Create Room
+    </button>
+  </header>
+
+  <!-- ROOMS LIST -->
+  <section class="space-y-4">
+    <div class="flex justify-between items-center px-1">
+      <h2 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Active Tournament Rooms</h2>
+      <span id="room-count" class="text-[10px] text-slate-500 font-semibold">Loading rooms...</span>
+    </div>
+
+    <div id="rooms-container" class="space-y-3">
+      <div class="text-center py-8 text-slate-500 text-xs bg-slate-900/50 rounded-2xl border border-slate-800/80">
+        Loading rooms from database...
       </div>
-      <button onclick="openCreateModal()" class="bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg cursor-pointer flex items-center gap-1 shrink-0">
-        <span>+</span> Create Room
-      </button>
     </div>
-
-    <!-- Search & Filter Controls -->
-    <div class="flex gap-2">
-      <div class="relative flex-1">
-        <input type="text" id="search-input" oninput="filterRooms()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-slate-700" placeholder="Search room or host...">
-      </div>
-      <select id="status-filter" onchange="filterRooms()" class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-slate-700 cursor-pointer">
-        <option value="all">All Status</option>
-        <option value="live">Live Now</option>
-        <option value="upcoming">Upcoming</option>
-      </select>
-    </div>
-
-    <!-- Active Rooms List Container -->
-    <div id="rooms-list-container" class="space-y-4">
-      <div class="text-center py-8 text-slate-500 text-xs">Loading tournament rooms...</div>
-    </div>
-  </div>
+  </section>
 
   <!-- CREATE ROOM MODAL -->
-  <div id="create-room-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div id="create-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 shadow-2xl relative space-y-4">
-      <button onclick="closeCreateModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold">✕</button>
+      <button onclick="closeCreateModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer">✕</button>
       
       <div class="border-b border-slate-800 pb-3 pr-8">
-        <h3 class="text-sm font-black text-yellow-400 uppercase">Create New Tournament Room</h3>
-        <p class="text-[10px] text-slate-400">Set up a secure arena room</p>
+        <h3 class="text-sm font-black text-yellow-400 uppercase tracking-wide">Create Tournament Room</h3>
+        <p class="text-[10px] text-slate-400">Set up a new live scoreboard room</p>
       </div>
 
       <div class="space-y-3">
         <div>
-          <label class="block text-xs font-bold text-slate-400 mb-1">Room Name</label>
-          <input type="text" id="new-room-name" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white" placeholder="e.g. Speedsoft Championship">
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Room Name</label>
+          <input type="text" id="new-room-name" placeholder="e.g. LA Press Winter Cup" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-400" />
         </div>
-
         <div>
-          <label class="block text-xs font-bold text-slate-400 mb-1">Admin Password</label>
-          <input type="password" id="new-room-password" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white" placeholder="Enter admin password">
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-400 mb-1">Confirm Admin Password</label>
-          <input type="password" id="confirm-room-password" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white" placeholder="Re-enter admin password">
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Admin Password</label>
+          <input type="text" id="new-room-pass" placeholder="Password to edit matches" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-400" />
         </div>
       </div>
 
-      <button onclick="createNewRoom()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-bold text-xs py-3 rounded-xl transition shadow-lg cursor-pointer">
-        Create & Enter Room
-      </button>
+      <div class="pt-2">
+        <button onclick="createNewRoom()" class="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black text-xs py-2.5 rounded-xl transition shadow-lg shadow-yellow-400/10 cursor-pointer">
+          Create Room & Enter Dashboard 🚀
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- FIREBASE LOGIC -->
+  <!-- FIREBASE & PORTAL LOGIC -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCnDxO6WzA9n4XyF_-0QhT3SksKaUV9C7Q",
@@ -90,142 +81,123 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    let allRoomsCache = {};
+    async function loadRoomsPortal() {
+      const container = document.getElementById("rooms-container");
+      const countEl = document.getElementById("room-count");
+      
+      try {
+        const roomsRef = ref(db, 'rooms');
+        const snapshot = await get(roomsRef);
+        
+        if (!snapshot.exists()) {
+          countEl.textContent = "0 rooms";
+          container.innerHTML = `
+            <div class="text-center py-10 bg-slate-900 rounded-2xl border border-slate-800 p-6 space-y-3">
+              <p class="text-xs text-slate-400">No active tournament rooms found.</p>
+              <button onclick="openCreateModal()" class="px-4 py-2 bg-yellow-400 text-slate-950 font-black text-xs rounded-xl">Create First Room</button>
+            </div>`;
+          return;
+        }
+
+        const roomsData = snapshot.val();
+        const roomKeys = Object.keys(roomsData);
+        countEl.textContent = `${roomKeys.length} room${roomKeys.length === 1 ? '' : 's'}`;
+        container.innerHTML = "";
+
+        for (const rId of roomKeys) {
+          const roomObj = roomsData[rId];
+          const settings = roomObj.room_settings || {};
+          const roomName = settings.roomName || rId.replace(/-/g, ' ').toUpperCase();
+          const streamUrl = settings.streamUrl || "";
+          
+          // Actual team count from database
+          const teamsMap = roomObj.team_profiles || {};
+          const teamCount = Object.keys(teamsMap).length;
+
+          // Only display "LIVE NOW" badge if streamUrl is present and non-empty
+          const isLiveNow = streamUrl && streamUrl.trim() !== "";
+          const liveBadgeHtml = isLiveNow ? 
+            `<span class="flex items-center gap-1.5 text-[10px] text-red-400 font-bold uppercase tracking-wider bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>LIVE NOW</span>` : 
+            `<span class="text-[10px] text-slate-500 font-medium">Offline</span>`;
+
+          container.innerHTML += `
+            <div class="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-4 transition space-y-3">
+              <div class="flex justify-between items-start gap-2">
+                <div>
+                  <h3 class="text-sm font-black text-yellow-400 uppercase tracking-wide">${roomName}</h3>
+                  <p class="text-[10px] text-slate-400 mt-0.5">${teamCount} team${teamCount === 1 ? '' : 's'} registered</p>
+                </div>
+                <div>${liveBadgeHtml}</div>
+              </div>
+              <div class="flex items-center gap-2 pt-1 border-t border-slate-800/60">
+                <a href="room.html?room=${rId}" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-center font-bold text-xs py-2 rounded-xl transition">
+                  👀 View Room
+                </a>
+                <button onclick="accessAdminDirectly('${rId}', '${settings.adminPassword || 'admin'}')" class="flex-1 bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-400 border border-yellow-400/30 text-center font-bold text-xs py-2 rounded-xl transition cursor-pointer">
+                  ⚙️ Admin Panel
+                </button>
+              </div>
+            </div>
+          `;
+        }
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = `<div class="text-center py-6 text-red-400 text-xs">Error loading rooms from database.</div>`;
+      }
+    }
 
     window.openCreateModal = function() {
-      document.getElementById("create-room-modal").classList.remove("hidden");
-    }
+      document.getElementById("create-modal").classList.remove("hidden");
+    };
 
     window.closeCreateModal = function() {
-      document.getElementById("create-room-modal").classList.add("hidden");
-    }
-
-    const roomsRef = ref(db, 'rooms');
-    onValue(roomsRef, (snapshot) => {
-      const data = snapshot.val();
-      allRoomsCache = data || {};
-      renderRooms(allRoomsCache);
-    });
-
-    window.filterRooms = function() {
-      const query = document.getElementById("search-input").value.toLowerCase();
-      const statusFilter = document.getElementById("status-filter").value;
-
-      const filtered = {};
-      Object.keys(allRoomsCache).forEach(roomId => {
-        const roomData = allRoomsCache[roomId];
-        const settings = roomData.room_settings || roomData;
-        const roomName = (settings.roomName || roomId).toLowerCase();
-        const hostName = (settings.hostName || "Ref Alex").toLowerCase();
-        const status = (settings.status || "live").toLowerCase();
-
-        const matchesQuery = roomName.includes(query) || hostName.includes(query);
-        const matchesStatus = statusFilter === "all" || status === statusFilter;
-
-        if (matchesQuery && matchesStatus) {
-          filtered[roomId] = roomData;
-        }
-      });
-      renderRooms(filtered);
-    }
-
-    function renderRooms(data) {
-      const roomsContainer = document.getElementById("rooms-list-container");
-
-      if (!data || Object.keys(data).length === 0) {
-        roomsContainer.innerHTML = `<div class="text-center py-8 text-slate-500 text-xs bg-slate-900 border border-slate-800 rounded-2xl">No matching tournament rooms found.</div>`;
-        return;
-      }
-
-      roomsContainer.innerHTML = "";
-      Object.keys(data).forEach(roomId => {
-        const roomData = data[roomId];
-        const settings = roomData.room_settings || roomData;
-        
-        const roomName = settings.roomName || "LA Press Arena";
-        const hostName = settings.hostName || "Ref Alex";
-        const dateStr = settings.date || "Aug 3, 2026";
-        const teamsCount = settings.teamsCount || "8 Teams";
-        const status = settings.status || "live"; // 'live' or 'upcoming'
-        const hasPassword = settings.adminPassword ? true : false;
-
-        let statusBadge = status === "live" 
-          ? `<span class="bg-emerald-950/80 border border-emerald-800/60 text-emerald-400 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> LIVE NOW</span>`
-          : `<span class="bg-slate-800/80 border border-slate-700/60 text-slate-300 text-[10px] font-bold px-2.5 py-1 rounded-full">UPCOMING</span>`;
-
-        let securityBadge = hasPassword
-          ? `<span class="text-slate-400 text-xs flex items-center gap-1">🔒 Password</span>`
-          : `<span class="text-emerald-400 text-xs flex items-center gap-1">🌐 Public</span>`;
-
-        roomsContainer.innerHTML += `
-          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-4">
-            <div class="flex justify-between items-start gap-2">
-              <div>
-                <h2 class="text-sm font-black uppercase text-white tracking-wide">${roomName}</h2>
-                <p class="text-xs text-slate-400 mt-0.5">Created by <span class="text-slate-200 font-semibold">${hostName}</span></p>
-              </div>
-              <div>${statusBadge}</div>
-            </div>
-
-            <div class="flex items-center justify-between text-xs text-slate-300 border-t border-b border-slate-800/80 py-2.5 px-1">
-              <div class="flex items-center gap-1.5">
-                <span>📅</span> <span>${dateStr}</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span>🛡️</span> <span>${teamsCount}</span>
-              </div>
-              <div>
-                ${securityBadge}
-              </div>
-            </div>
-
-            <a href="room.html?room=${roomId}" class="block w-full bg-slate-950 hover:bg-slate-950/80 border border-slate-800 text-yellow-400 font-bold text-xs py-3 rounded-xl transition text-center shadow-md">
-              Enter Room ➔
-            </a>
-          </div>
-        `;
-      });
-    }
+      document.getElementById("create-modal").classList.add("hidden");
+    };
 
     window.createNewRoom = async function() {
-      const roomNameInput = document.getElementById("new-room-name");
-      const passwordInput = document.getElementById("new-room-password");
-      const confirmInput = document.getElementById("confirm-room-password");
+      const nameInput = document.getElementById("new-room-name").value.trim();
+      const passInput = document.getElementById("new-room-pass").value.trim() || "admin";
 
-      const roomName = roomNameInput ? roomNameInput.value.trim() : "LA Press Arena";
-      const password = passwordInput ? passwordInput.value : "";
-      const confirmPassword = confirmInput ? confirmInput.value : "";
-
-      if (password !== confirmPassword) {
-        alert("Error: Passwords do not match. Please re-enter.");
+      if (!nameInput) {
+        alert("Please enter a room name.");
         return;
       }
 
-      if (!password) {
-        alert("Error: Password cannot be blank.");
-        return;
-      }
-
-      const roomId = 'room_' + Math.random().toString(36).substring(2, 9);
+      const roomId = nameInput.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
 
       try {
-        await set(ref(db, `rooms/${roomId}/room_settings`), {
-          roomName: roomName || "LA Press Arena",
-          adminPassword: password,
-          roundsPerGame: 3,
-          streamUrl: "",
-          hostName: "Ref Alex",
-          date: "Aug 3, 2026",
-          teamsCount: "8 Teams",
-          status: "live"
-        });
+        const roomRef = ref(db, `rooms/${roomId}/room_settings`);
+        const snapshot = await get(roomRef);
 
-        window.location.href = `room.html?room=${roomId}`;
-      } catch (error) {
-        console.error("Error creating room:", error);
-        alert("Failed to create room. Please try again.");
+        if (!snapshot.exists()) {
+          await set(roomRef, {
+            roomName: nameInput,
+            adminPassword: passInput,
+            roundsPerGame: 3,
+            streamUrl: ""
+          });
+        }
+
+        localStorage.setItem(`admin_${roomId}`, 'true');
+        window.location.href = `admin.html?room=${roomId}`;
+      } catch (err) {
+        console.error(err);
+        alert("Failed to create room.");
       }
     };
+
+    window.accessAdminDirectly = function(rId, defaultPass) {
+      const entered = prompt("Enter Admin Password:");
+      if (entered === null) return;
+      if (entered === defaultPass) {
+        localStorage.setItem(`admin_${rId}`, 'true');
+        window.location.href = `admin.html?room=${rId}`;
+      } else {
+        alert("Incorrect admin password.");
+      }
+    };
+
+    loadRoomsPortal();
   </script>
 </body>
 </html>
