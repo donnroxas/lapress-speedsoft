@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LA Press Speedsoft - Live Room</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-white p-4 max-w-xl mx-auto min-h-screen pb-16 relative">
+
+  <!-- Header -->
+  <header class="mb-5 border-b border-slate-800 pb-3 flex justify-between items-center">
+    <div>
+      <h1 id="room-header-title" class="text-lg font-black tracking-wider uppercase text-yellow-400">LA PRESS SPEEDSOFT</h1>
+      <p id="room-subtitle" class="text-[11px] text-slate-400">Live Tournament Room</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <!-- Home Button -->
+      <a href="index.html" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs px-3 py-1.5 rounded-lg transition">🏠 Home</a>
+      <!-- Discreet Header Gear Admin Button -->
+      <button onclick="promptAdminAccess()" class="bg-slate-900 hover:bg-slate-800 text-slate-500 hover:text-slate-300 border border-slate-800/80 font-bold text-xs p-1.5 rounded-lg transition cursor-pointer" title="Admin Settings">⚙️</button>
+    </div>
+  </header>
+
+  <!-- LIVE STREAM SECTION -->
+  <section class="bg-slate-900 rounded-xl p-3 border border-slate-800 shadow-lg mb-5">
+    <div class="flex justify-between items-center mb-2">
+      <span class="text-xs font-bold text-yellow-400 uppercase tracking-wide flex items-center gap-1.5">
+        <span>📡</span> LIVE STREAM FEED (YOUTUBE / TWITCH)
+      </span>
+      <span id="live-indicator" class="flex items-center gap-1.5 text-[10px] text-red-400 font-bold uppercase tracking-wider">
+        <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> Live
+      </span>
+    </div>
+
+    <!-- Video Container -->
+    <div id="video-container" class="relative w-full bg-slate-950 rounded-lg overflow-hidden border border-slate-800 aspect-video flex items-center justify-center">
+      <div id="video-placeholder" class="absolute inset-0 bg-cover bg-center flex flex-col items-center justify-center p-4 text-center bg-slate-900 z-10" style="background-image: linear-gradient(to bottom, rgba(2, 6, 23, 0.7), rgba(2, 6, 23, 0.9)), url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1000&auto=format&fit=crop');">
+        <button onclick="playStream()" class="w-14 h-14 bg-red-600 hover:bg-red-500 text-white rounded-full flex items-center justify-center shadow-xl transition transform hover:scale-110 mb-2 cursor-pointer">
+          <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+        </button>
+        <span class="text-xs font-bold text-white uppercase tracking-wider">Start Live Stream Player</span>
+        <span class="text-[10px] text-slate-400 mt-1">Supports YouTube & Twitch live feeds</span>
+      </div>
+      <div id="iframe-wrapper" class="absolute inset-0 w-full h-full"></div>
+    </div>
+  </section>
+
+  <!-- OVERALL LEADERBOARD -->
+  <section class="bg-slate-900 rounded-xl p-4 border border-slate-800 shadow-lg mb-5">
+    <div class="flex justify-between items-center mb-3">
+      <h2 class="text-xs font-bold text-yellow-400 uppercase tracking-wide">🏆 OVERALL LEADERBOARD</h2>
+      <span class="text-[10px] text-slate-400">Click team for roster</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b border-slate-800 text-[10px] text-slate-400 uppercase">
+            <th class="py-2 px-2 font-bold w-12">Rank</th>
+            <th class="py-2 px-2 font-bold">Team</th>
+            <th class="py-2 px-2 font-bold text-right">Points</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboard-tbody" class="divide-y divide-slate-800/60 text-xs">
+          <tr><td colspan="3" class="text-center py-4 text-slate-500">Loading leaderboard...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- MATCH SCHEDULE -->
+  <section class="bg-slate-900 rounded-xl p-4 border border-slate-800 shadow-lg mb-5">
+    <h2 class="text-xs font-bold text-slate-100 uppercase tracking-wide mb-3">⚔️ MATCH SCHEDULE</h2>
+    <div id="matches-container" class="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+      <div class="text-center py-4 text-slate-500 text-xs">Loading matches...</div>
+    </div>
+  </section>
+
+  <!-- TEAM ROSTER MODAL -->
+  <div id="roster-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 shadow-2xl relative space-y-4">
+      <button onclick="closeRosterModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold">✕</button>
+      <div class="flex items-center gap-3 border-b border-slate-800 pb-3 pr-8">
+        <div id="modal-team-logo" class="w-10 h-10 rounded-full bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-400 text-base shrink-0">🛡️</div>
+        <div>
+          <h3 id="modal-team-name" class="text-sm font-black text-yellow-400 uppercase">Team Roster</h3>
+          <p class="text-[10px] text-slate-400">Active Player Lineup</p>
+        </div>
+      </div>
+      <div id="modal-players-list" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+    </div>
+  </div>
+
+  <!-- FIREBASE & APP LOGIC -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCnDxO6WzA9n4XyF_-0QhT3SksKaUV9C7Q",
+      authDomain: "lapress-88be8.firebaseapp.com",
+      databaseURL: "https://lapress-88be8-default-rtdb.firebaseio.com",
+      projectId: "lapress-88be8",
+      storageBucket: "lapress-88be8.firebasestorage.app",
+      messagingSenderId: "326291990802",
+      appId: "1:326291990802:web:7feedfdb956f3371e3ebcb",
+      measurementId: "G-S5G8F8ZHXH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomId = urlParams.get('room');
+
+    const dbBasePath = roomId ? `rooms/${roomId}` : '';
+    const roomRef = ref(db, `${dbBasePath}/room_settings`);
+    const teamsRef = ref(db, `${dbBasePath}/team_profiles`);
+    const matchesRef = ref(db, `${dbBasePath}/round_matches`);
+
+    let globalStreamUrl = "";
+    let totalRounds = 3;
+    let teamsData = [];
+    let matchSchedule = [];
+    let roomAdminPassword = "admin";
+
+    // Fetch Room Settings, Admin Password & Room Name from Firebase
+    onValue(roomRef, (snapshot) => {
+      const settings = snapshot.val();
+      if (settings) {
+        totalRounds = parseInt(settings.roundsPerGame) || 3;
+        globalStreamUrl = settings.streamUrl || "";
+        if (settings.adminPassword) {
+          roomAdminPassword = settings.adminPassword;
+        }
+        
+        const activeRoomName = settings.roomName || (roomId ? roomId.replace(/-/g, ' ').toUpperCase() : "LA PRESS SPEEDSOFT");
+        document.getElementById("room-header-title").textContent = activeRoomName;
+        document.getElementById("room-subtitle").textContent = `Live Tournament Room: ${activeRoomName}`;
+        document.title = `${activeRoomName} - Live Room`;
+      } else if (roomId) {
+        const fallbackName = roomId.replace(/-/g, ' ').toUpperCase();
+        document.getElementById("room-header-title").textContent = fallbackName;
+        document.getElementById("room-subtitle").textContent = `Live Tournament Room: ${fallbackName}`;
+      }
+    });
+
+    // Password Prompt Handler for Admin Access
+    window.promptAdminAccess = function() {
+      const enteredPassword = prompt("Enter Admin Password:");
+      if (enteredPassword === null) return;
+
+      if (enteredPassword === roomAdminPassword) {
+        if (roomId) {
+          localStorage.setItem(`admin_${roomId}`, 'true');
+          window.location.href = `admin.html?room=${roomId}`;
+        } else {
+          window.location.href = `admin.html`;
+        }
+      } else {
+        alert("Incorrect admin password.");
+      }
+    };
+
+    onValue(teamsRef, (snapshot) => {
+      teamsData = snapshot.val() ? Object.values(snapshot.val()) : [];
+      computeAndRenderLeaderboard();
+      renderMatches();
+    });
+
+    onValue(matchesRef, (snapshot) => {
+      matchSchedule = snapshot.val() ? Object.values(snapshot.val()) : [];
+      computeAndRenderLeaderboard();
+      renderMatches();
+    });
+
+    // FIXED STREAM PLAYER (Supports YouTube and Twitch)
+    window.playStream = function() {
+      if (!globalStreamUrl) {
+        alert("No stream URL entered in admin settings!");
+        return;
+      }
+
+      const iframeWrapper = document.getElementById("iframe-wrapper");
+      let embedHtml = "";
+
+      // Check for YouTube URL formats (youtube.com/watch?v=ID, youtu.be/ID, youtube.com/live/ID)
+      if (globalStreamUrl.includes("youtube.com") || globalStreamUrl.includes("youtu.be")) {
+        let videoId = "";
+        if (globalStreamUrl.includes("youtu.be/")) {
+          videoId = globalStreamUrl.split("youtu.be/")[1]?.split("?")[0];
+        } else if (globalStreamUrl.includes("/embed/")) {
+          videoId = globalStreamUrl.split("/embed/")[1]?.split("?")[0];
+        } else if (globalStreamUrl.includes("/live/")) {
+          videoId = globalStreamUrl.split("/live/")[1]?.split("?")[0];
+        } else {
+          const urlParams = new URLSearchParams(globalStreamUrl.split('?')[1]);
+          videoId = urlParams.get('v');
+        }
+
+        if (videoId) {
+          embedHtml = `
+            <iframe 
+              src="https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1" 
+              class="w-full h-full border-0" 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+              allowfullscreen>
+            </iframe>`;
+        }
+      } 
+      // Check for Twitch URL formats
+      else if (globalStreamUrl.includes("twitch.tv/")) {
+        const cleanPath = globalStreamUrl.split("twitch.tv/")[1];
+        const channel = cleanPath ? cleanPath.split("/")[0].split("?")[0] : "";
+        const hostname = window.location.hostname && window.location.hostname !== "" ? window.location.hostname : "localhost";
+
+        if (channel) {
+          embedHtml = `
+            <iframe 
+              src="https://player.twitch.tv/?channel=${channel}&parent=${hostname}&autoplay=true" 
+              class="w-full h-full border-0" 
+              allowfullscreen>
+            </iframe>`;
+        }
+      }
+
+      if (embedHtml) {
+        iframeWrapper.innerHTML = embedHtml;
+        document.getElementById("video-placeholder").style.display = "none";
+      } else {
+        iframeWrapper.innerHTML = `
+          <div class="flex flex-col items-center justify-center h-full p-4 text-center bg-slate-950 space-y-2">
+            <p class="text-xs text-yellow-400 font-bold">Could not parse stream link format.</p>
+            <a href="${globalStreamUrl}" target="_blank" class="px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-bold">Open Stream Directly ↗</a>
+          </div>`;
+        document.getElementById("video-placeholder").style.display = "none";
+      }
+    };
+
+    function computeAndRenderLeaderboard() {
+      const tbody = document.getElementById("leaderboard-tbody");
+      if (!tbody) return;
+      if (!teamsData.length) {
+        tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-slate-500">No teams available.</td></tr>`;
+        return;
+      }
+
+      const teamScores = teamsData.map((team, idx) => ({
+        idx, name: team.name || `Team ${idx}`, logo: team.logo || "", points: 0
+      }));
+
+      matchSchedule.forEach(match => {
+        const tAIdx = match.teamAIdx;
+        const tBIdx = match.teamBIdx;
+        if (tAIdx >= 0 && tAIdx < teamScores.length) {
+          const sumA = (match.teamARounds || []).reduce((a, b) => a + (parseInt(b) || 0), 0);
+          teamScores[tAIdx].points += (sumA - (parseInt(match.teamAPenalty) || 0));
+        }
+        if (tBIdx >= 0 && tBIdx < teamScores.length) {
+          const sumB = (match.teamBRounds || []).reduce((a, b) => a + (parseInt(b) || 0), 0);
+          teamScores[tBIdx].points += (sumB - (parseInt(match.teamBPenalty) || 0));
+        }
+      });
+
+      teamScores.sort((a, b) => b.points - a.points);
+      tbody.innerHTML = "";
+      teamScores.forEach((team, rankIdx) => {
+        let rankDisplay = `#${rankIdx + 1}`;
+        if (rankIdx === 0) rankDisplay = `🥇`;
+        else if (rankIdx === 1) rankDisplay = `🥈`;
+        else if (rankIdx === 2) rankDisplay = `🥉`;
+
+        const logoHtml = team.logo ? 
+          `<img src="${team.logo}" class="w-6 h-6 rounded-full object-cover border border-slate-700 shrink-0" />` : 
+          `<div class="w-6 h-6 rounded-full bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-400 text-[10px] shrink-0">🛡️</div>`;
+
+        tbody.innerHTML += `
+          <tr onclick="openRosterModal(${team.idx})" class="hover:bg-slate-800/40 cursor-pointer transition">
+            <td class="py-2.5 px-2 font-bold text-slate-400">${rankDisplay}</td>
+            <td class="py-2.5 px-2 font-bold text-white flex items-center gap-2.5">${logoHtml}<span class="truncate">${team.name}</span></td>
+            <td class="py-2.5 px-2 text-right font-black text-yellow-400">${team.points} pts</td>
+          </tr>
+        `;
+      });
+    }
+
+    window.openRosterModal = function(teamIdx) {
+      const team = teamsData[teamIdx];
+      if (!team) return;
+      document.getElementById("modal-team-name").textContent = team.name || "Team Roster";
+      const logoContainer = document.getElementById("modal-team-logo");
+      logoContainer.innerHTML = team.logo ? `<img src="${team.logo}" class="w-full h-full rounded-full object-cover" />` : `🛡️`;
+
+      const playersList = document.getElementById("modal-players-list");
+      playersList.innerHTML = "";
+      const players = team.players || [];
+      if (!players.length) {
+        playersList.innerHTML = `<div class="text-center py-4 text-slate-500 text-xs italic">No players registered.</div>`;
+      } else {
+        players.forEach(p => {
+          const photoThumb = p.photo ? `<img src="${p.photo}" class="w-8 h-8 rounded object-cover border border-slate-700 shrink-0" />` : `<div class="w-8 h-8 rounded bg-slate-800 border border-slate-700 flex items-center justify-center text-xs shrink-0">👤</div>`;
+          playersList.innerHTML += `
+            <div class="flex items-center gap-3 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+              ${photoThumb}
+              <span class="text-xs font-semibold text-white tracking-wide">${p.name || 'Unnamed Player'}</span>
+            </div>`;
+        });
+      }
+      document.getElementById("roster-modal").classList.remove("hidden");
+    };
+
+    window.closeRosterModal = function() {
+      document.getElementById("roster-modal").classList.add("hidden");
+    };
+
+    function renderMatches() {
+      const container = document.getElementById("matches-container");
+      if (!container) return;
+      if (!matchSchedule.length) {
+        container.innerHTML = `<div class="text-center py-4 text-slate-500 text-xs">No matches scheduled yet.</div>`;
+        return;
+      }
+
+      container.innerHTML = "";
+      matchSchedule.forEach((match, mIdx) => {
+        const teamA = teamsData[match.teamAIdx] || { name: "Team A", logo: "" };
+        const teamB = teamsData[match.teamBIdx] || { name: "Team B", logo: "" };
+
+        let roundBoxesA = "", roundBoxesB = "";
+        for (let r = 0; r < totalRounds; r++) {
+          roundBoxesA += `<span class="w-7 h-7 bg-slate-900 border border-slate-800 rounded flex items-center justify-center text-[11px] font-bold text-white">${match.teamARounds?.[r] || 0}</span>`;
+          roundBoxesB += `<span class="w-7 h-7 bg-slate-900 border border-slate-800 rounded flex items-center justify-center text-[11px] font-bold text-white">${match.teamBRounds?.[r] || 0}</span>`;
+        }
+
+        container.innerHTML += `
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2.5">
+            <div class="flex justify-between items-center text-[10px] border-b border-slate-900 pb-1.5">
+              <span class="font-black text-yellow-400">MATCH #${match.id || (mIdx + 1)}</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-bold text-white truncate">${teamA.name}</span>
+              <div class="flex items-center gap-1">${roundBoxesA}<span class="w-7 h-7 bg-red-500/10 border border-red-500/30 rounded flex items-center justify-center text-[11px] font-bold text-red-400">${match.teamAPenalty || 0}</span></div>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-bold text-white truncate">${teamB.name}</span>
+              <div class="flex items-center gap-1">${roundBoxesB}<span class="w-7 h-7 bg-red-500/10 border border-red-500/30 rounded flex items-center justify-center text-[11px] font-bold text-red-400">${match.teamBPenalty || 0}</span></div>
+            </div>
+          </div>
+        `;
+      });
+    }
+  </script>
+</body>
+</html>

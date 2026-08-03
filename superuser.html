@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LA Press Speedsoft - SuperUser Control</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-white p-4 max-w-2xl mx-auto min-h-screen pb-12">
+
+  <!-- AUTHENTICATION CONTAINER -->
+  <div id="auth-container" class="mt-20 bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-2xl max-w-sm mx-auto text-center">
+    <div class="text-3xl mb-2">⚡</div>
+    <h1 class="text-base font-black uppercase text-yellow-400 tracking-wider mb-1">SuperUser Authentication</h1>
+    <p class="text-xs text-slate-400 mb-4">Enter master security key to access root admin control.</p>
+    
+    <input type="password" id="passkey-input" placeholder="Enter Master Passkey" 
+           class="w-full bg-slate-950 border border-slate-800 text-white text-xs px-3 py-2.5 rounded-lg mb-3 text-center focus:outline-none focus:border-yellow-400 transition" />
+    
+    <button onclick="loginSuperUser()" class="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-950 font-bold text-xs py-2.5 rounded-lg transition uppercase tracking-wide">
+      Authenticate
+    </button>
+    <p id="auth-error" class="text-red-400 text-[11px] mt-2 hidden">Invalid Master Key</p>
+  </div>
+
+  <!-- DASHBOARD CONTAINER (HIDDEN UNTIL AUTHENTICATED) -->
+  <div id="dashboard-container" class="hidden">
+    <!-- Header -->
+    <header class="mb-5 border-b border-slate-800 pb-3 flex justify-between items-center">
+      <div>
+        <h1 class="text-lg font-black tracking-wider uppercase text-yellow-400 flex items-center gap-2">
+          <span>⚡ SUPERUSER DASHBOARD</span>
+        </h1>
+        <p class="text-[11px] text-slate-400">Root Management & Multi-Room Control</p>
+      </div>
+      <button onclick="logoutSuperUser()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-1.5 rounded-lg border border-slate-700">
+        Lock
+      </button>
+    </header>
+
+    <!-- ROOM MANAGEMENT SECTION -->
+    <main>
+      <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 shadow-lg">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xs font-bold text-slate-100 uppercase tracking-wide">Active System Rooms</h2>
+          <span id="room-count-badge" class="bg-slate-800 text-yellow-400 font-bold text-[10px] px-2.5 py-1 rounded-full border border-slate-700">
+            0 Active
+          </span>
+        </div>
+
+        <div id="rooms-list" class="space-y-3">
+          <div class="text-center py-6 text-slate-500 text-xs">Loading registered rooms...</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- FIREBASE & SUPERUSER LOGIC -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCnDxO6WzA9n4XyF_-0QhT3SksKaUV9C7Q",
+      authDomain: "lapress-88be8.firebaseapp.com",
+      databaseURL: "https://lapress-88be8-default-rtdb.firebaseio.com",
+      projectId: "lapress-88be8",
+      storageBucket: "lapress-88be8.firebasestorage.app",
+      messagingSenderId: "326291990802",
+      appId: "1:326291990802:web:7feedfdb956f3371e3ebcb",
+      measurementId: "G-S5G8F8ZHXH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // MASTER PASSKEY
+    const MASTER_PASSKEY = "admin123";
+
+    window.loginSuperUser = function() {
+      const input = document.getElementById("passkey-input").value;
+      if (input === MASTER_PASSKEY) {
+        sessionStorage.setItem("is_superuser", "true");
+        showDashboard();
+      } else {
+        document.getElementById("auth-error").classList.remove("hidden");
+      }
+    };
+
+    window.logoutSuperUser = function() {
+      sessionStorage.removeItem("is_superuser");
+      location.reload();
+    };
+
+    function checkAuth() {
+      if (sessionStorage.getItem("is_superuser") === "true") {
+        showDashboard();
+      }
+    }
+
+    function showDashboard() {
+      document.getElementById("auth-container").classList.add("hidden");
+      document.getElementById("dashboard-container").classList.remove("hidden");
+      listenToRooms();
+    }
+
+    function listenToRooms() {
+      const rootRef = ref(db);
+      onValue(rootRef, (snapshot) => {
+        const data = snapshot.val();
+        renderRooms(data);
+      });
+    }
+
+    function renderRooms(rootData) {
+      const listContainer = document.getElementById("rooms-list");
+      if (!listContainer) return;
+      
+      listContainer.innerHTML = "";
+
+      if (!rootData || typeof rootData !== 'object') {
+        listContainer.innerHTML = `<div class="text-center py-6 text-slate-500 text-xs">No active rooms found in Firebase.</div>`;
+        const badge = document.getElementById("room-count-badge");
+        if (badge) badge.textContent = "0 Active";
+        return;
+      }
+
+      let rooms = [];
+
+      // 1. Check for default root-level room
+      if (rootData.room_settings || rootData.round_matches || rootData.team_profiles) {
+        const rootName = rootData.room_settings?.roomName || rootData.roomName || "LA PRESS ARENA (Default)";
+        rooms.push({
+          id: "default",
+          name: rootName,
+          path: ""
+        });
+      }
+
+      // 2. Check for multi-room structure under /rooms
+      if (rootData.rooms && typeof rootData.rooms === 'object') {
+        Object.keys(rootData.rooms).forEach(key => {
+          const rData = rootData.rooms[key] || {};
+          
+          let foundName = 
+            rData.room_settings?.roomName || 
+            rData.roomName || 
+            rData.title || 
+            rData.name;
+
+          // Search one level deeper in sub-keys if not found
+          if (!foundName && typeof rData === 'object') {
+            for (const subKey in rData) {
+              if (rData[subKey] && typeof rData[subKey] === 'object' && rData[subKey].roomName) {
+                foundName = rData[subKey].roomName;
+                break;
+              }
+            }
+          }
+
+          const roomName = foundName || `Room (${key.substring(0, 8)})`;
+
+          rooms.push({
+            id: key,
+            name: roomName,
+            path: `rooms/${key}`
+          });
+        });
+      }
+
+      const badge = document.getElementById("room-count-badge");
+      if (badge) badge.textContent = `${rooms.length} Active`;
+
+      if (rooms.length === 0) {
+        listContainer.innerHTML = `<div class="text-center py-6 text-slate-500 text-xs">No active rooms found in Firebase.</div>`;
+        return;
+      }
+
+      rooms.forEach((room) => {
+        const safeRoomName = room.name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+
+        listContainer.innerHTML += `
+          <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-white">${room.name}</span>
+                <span class="text-[9px] bg-slate-900 border border-slate-800 text-slate-400 px-1.5 py-0.5 rounded uppercase">ID: ${room.id}</span>
+              </div>
+              <p class="text-[10px] text-slate-500 mt-0.5">Database Path: ${room.path ? '/' + room.path : 'Root Level'}</p>
+            </div>
+
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+              <a href="admin.html${room.id !== 'default' ? '?room=' + room.id : ''}" target="_blank" 
+                 class="bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-400 border border-yellow-400/30 text-xs font-semibold px-2.5 py-1.5 rounded transition text-center">
+                ⚙️ Admin Mode
+              </a>
+
+              <a href="room.html${room.id !== 'default' ? '?room=' + room.id : ''}" target="_blank" 
+                 class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold px-2.5 py-1.5 rounded transition text-center">
+                👁️ View Room
+              </a>
+
+              <button onclick="deleteRoom('${room.path}', '${safeRoomName}')" 
+                      class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-semibold px-2.5 py-1.5 rounded transition">
+                🗑️ Delete
+              </button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    window.deleteRoom = function(path, roomName) {
+      const confirmDelete = confirm(`⚠️ ARE YOU SURE?\n\nThis will permanently delete "${roomName}" along with all its settings, teams, and match scores!`);
+      
+      if (!confirmDelete) return;
+
+      if (path === "") {
+        remove(ref(db, 'room_settings'));
+        remove(ref(db, 'team_profiles'));
+        remove(ref(db, 'round_matches'));
+      } else {
+        remove(ref(db, path));
+      }
+
+      alert(`Room "${roomName}" has been deleted.`);
+    };
+
+    checkAuth();
+  </script>
+</body>
+</html>
