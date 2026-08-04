@@ -5,6 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LA Press Speedsoft - Live Room</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Glow and enlarge effects for player and team photos */
+    img[src], .player-photo-glow {
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    img[src]:hover {
+      transform: scale(1.03);
+      box-shadow: 0 0 15px rgba(234, 179, 8, 0.7);
+    }
+    /* Lightbox Modal */
+    #photo-lightbox-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background-color: rgba(0, 0, 0, 0.9);
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+    }
+    #photo-lightbox-modal img {
+      max-width: 90%;
+      max-height: 90%;
+      border-radius: 12px;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
+    }
+  </style>
 </head>
 <body class="bg-[#0b0f19] text-white p-4 max-w-xl mx-auto min-h-screen pb-16 relative font-sans">
 
@@ -93,6 +121,11 @@
     </div>
   </div>
 
+  <!-- LIGHTBOX MODAL FOR ENLARGED PHOTOS -->
+  <div id="photo-lightbox-modal" onclick="closeLightbox()">
+    <img id="lightbox-image-target" src="" alt="Enlarged View">
+  </div>
+
   <!-- FIREBASE & APP LOGIC -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -179,6 +212,18 @@
       computeAndRenderLeaderboard();
       renderMatches();
     });
+
+    // LIGHTBOX HANDLERS
+    window.openLightbox = function(event, imgUrl) {
+      if (!imgUrl) return;
+      event.stopPropagation();
+      document.getElementById("lightbox-image-target").src = imgUrl;
+      document.getElementById("photo-lightbox-modal").style.display = "flex";
+    };
+
+    window.closeLightbox = function() {
+      document.getElementById("photo-lightbox-modal").style.display = "none";
+    };
 
     // FIXED STREAM PLAYER (Supports YouTube and Twitch)
     window.playStream = function() {
@@ -277,7 +322,7 @@
         else if (rankIdx === 2) rankDisplay = `🥉`;
 
         const logoHtml = team.logo ? 
-          `<img src="${team.logo}" class="w-6 h-6 rounded-full object-cover border border-slate-700 shrink-0" />` : 
+          `<img src="${team.logo}" onclick="openLightbox(event, '${team.logo}')" class="w-6 h-6 rounded-full object-cover border border-slate-700 shrink-0" />` : 
           `<div class="w-6 h-6 rounded-full bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-400 text-[10px] shrink-0">🛡️</div>`;
 
         tbody.innerHTML += `
@@ -295,7 +340,7 @@
       if (!team) return;
       document.getElementById("modal-team-name").textContent = team.name || "Team Roster";
       const logoContainer = document.getElementById("modal-team-logo");
-      logoContainer.innerHTML = team.logo ? `<img src="${team.logo}" class="w-full h-full rounded-full object-cover" />` : `🛡️`;
+      logoContainer.innerHTML = team.logo ? `<img src="${team.logo}" onclick="openLightbox(event, '${team.logo}')" class="w-full h-full rounded-full object-cover" />` : `🛡️`;
 
       const playersList = document.getElementById("modal-players-list");
       playersList.innerHTML = "";
@@ -304,7 +349,7 @@
         playersList.innerHTML = `<div class="text-center py-4 text-slate-500 text-xs italic">No players registered.</div>`;
       } else {
         players.forEach(p => {
-          const photoThumb = p.photo ? `<img src="${p.photo}" class="w-8 h-8 rounded object-cover border border-slate-700 shrink-0" />` : `<div class="w-8 h-8 rounded bg-slate-800 border border-slate-700 flex items-center justify-center text-xs shrink-0">👤</div>`;
+          const photoThumb = p.photo ? `<img src="${p.photo}" onclick="openLightbox(event, '${p.photo}')" class="w-8 h-8 rounded object-cover border border-slate-700 shrink-0" />` : `<div class="w-8 h-8 rounded bg-slate-800 border border-slate-700 flex items-center justify-center text-xs shrink-0">👤</div>`;
           playersList.innerHTML += `
             <div class="flex items-center gap-3 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
               ${photoThumb}
