@@ -45,7 +45,7 @@
     <div class="flex items-center gap-2">
       <!-- Home Button -->
       <a href="index.html" class="bg-[#111827] hover:bg-slate-800 text-slate-200 border border-slate-800 font-bold text-xs px-3 py-1.5 rounded-xl transition">🏠 Home</a>
-      <!-- Discreet Header Gear Admin Button -->
+      <!-- Admin Gear Button -->
       <button onclick="promptAdminAccess()" class="bg-[#111827] hover:bg-slate-800 text-slate-500 hover:text-slate-300 border border-slate-800 font-bold text-xs p-1.5 rounded-xl transition cursor-pointer" title="Admin Settings">⚙️</button>
     </div>
   </header>
@@ -76,11 +76,21 @@
     </div>
   </section>
 
+  <!-- PARTICIPATING TEAMS -->
+  <section class="bg-[#111827] rounded-2xl p-4 border border-slate-800 shadow-lg mb-5">
+    <div class="flex justify-between items-center mb-3">
+      <h2 class="text-xs font-bold text-yellow-400 uppercase tracking-wide">🛡️ PARTICIPATING TEAMS</h2>
+      <span class="text-[10px] text-slate-400">Click team for roster</span>
+    </div>
+    <div id="teams-grid-container" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+      <div class="text-center py-3 text-slate-500 text-xs col-span-full">Loading teams...</div>
+    </div>
+  </section>
+
   <!-- OVERALL LEADERBOARD -->
   <section class="bg-[#111827] rounded-2xl p-4 border border-slate-800 shadow-lg mb-5">
     <div class="flex justify-between items-center mb-3">
       <h2 class="text-xs font-bold text-yellow-400 uppercase tracking-wide">🏆 OVERALL LEADERBOARD</h2>
-      <span class="text-[10px] text-slate-400">Click team for roster</span>
     </div>
     <div class="overflow-x-auto">
       <table class="w-full text-left border-collapse">
@@ -98,20 +108,20 @@
     </div>
   </section>
 
-  <!-- MATCH SCHEDULE -->
+  <!-- BRACKETS & MATCH SCHEDULE -->
   <section class="bg-[#111827] rounded-2xl p-4 border border-slate-800 shadow-lg mb-5">
-    <h2 class="text-xs font-bold text-slate-100 uppercase tracking-wide mb-3">⚔️ MATCH SCHEDULE</h2>
-    <div id="matches-container" class="space-y-4 max-h-[500px] overflow-y-auto pr-1">
-      <div class="text-center py-4 text-slate-500 text-xs">Loading matches...</div>
+    <h2 class="text-xs font-bold text-slate-100 uppercase tracking-wide mb-3">⚔️ BRACKETS & MATCH SCHEDULE</h2>
+    <div id="matches-container" class="space-y-4">
+      <div class="text-center py-4 text-slate-500 text-xs">Loading brackets...</div>
     </div>
   </section>
 
   <!-- TEAM ROSTER MODAL -->
-  <div id="roster-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div id="roster-modal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-[#111827] border border-slate-800 rounded-2xl w-full max-w-md p-5 shadow-2xl relative space-y-4">
       <button onclick="closeRosterModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer">✕</button>
       <div class="flex items-center gap-3 border-b border-slate-800 pb-3 pr-8">
-        <div id="modal-team-logo" class="w-10 h-10 rounded-full bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-400 text-base shrink-0">🛡️</div>
+        <div id="modal-team-logo" class="w-10 h-10 rounded-full bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-400 text-base shrink-0 overflow-hidden">🛡️</div>
         <div>
           <h3 id="modal-team-name" class="text-sm font-black text-yellow-400 uppercase">Team Roster</h3>
           <p class="text-[10px] text-slate-400">Active Player Lineup</p>
@@ -148,15 +158,15 @@
     const urlParams = new URLSearchParams(window.location.search);
     const roomId = urlParams.get('room');
 
-    const dbBasePath = roomId ? `rooms/${roomId}` : '';
+    const dbBasePath = roomId ? `rooms/${roomId}` : "rooms/main";
     const roomRef = ref(db, `${dbBasePath}/room_settings`);
     const teamsRef = ref(db, `${dbBasePath}/team_profiles`);
-    const matchesRef = ref(db, `${dbBasePath}/round_matches`);
+    const bracketsRef = ref(db, `${dbBasePath}/brackets`);
 
     let globalStreamUrl = "";
     let totalRounds = 3;
     let teamsData = [];
-    let matchSchedule = [];
+    let allBrackets = {};
     let roomAdminPassword = "admin";
 
     onValue(roomRef, (snapshot) => {
@@ -164,8 +174,9 @@
       if (settings) {
         totalRounds = parseInt(settings.roundsPerGame) || 3;
         globalStreamUrl = settings.streamUrl || "";
-        if (settings.adminPassword) {
-          roomAdminPassword = settings.adminPassword;
+        
+        if (settings.adminPassword && settings.adminPassword.trim() !== "") {
+          roomAdminPassword = settings.adminPassword.trim();
         }
         
         const activeRoomName = settings.roomName || (roomId ? roomId.replace(/-/g, ' ').toUpperCase() : "LA PRESS SPEEDSOFT");
@@ -189,7 +200,6 @@
 
       if (enteredPassword === roomAdminPassword) {
         if (roomId) {
-          localStorage.setItem(`admin_${roomId}`, 'true');
           window.location.href = `admin.html?room=${roomId}`;
         } else {
           window.location.href = `admin.html`;
@@ -200,15 +210,21 @@
     };
 
     onValue(teamsRef, (snapshot) => {
-      teamsData = snapshot.val() ? Object.values(snapshot.val()) : [];
+      const rawTeams = snapshot.val() || [];
+      teamsData = rawTeams.map((t, idx) => {
+        if (typeof t === 'string') {
+          return { name: t, logo: '', players: [], idx };
+        }
+        return { ...t, idx };
+      });
+      renderTeamsGrid();
       computeAndRenderLeaderboard();
-      renderMatches();
     });
 
-    onValue(matchesRef, (snapshot) => {
-      matchSchedule = snapshot.val() ? Object.values(snapshot.val()) : [];
+    onValue(bracketsRef, (snapshot) => {
+      allBrackets = snapshot.val() || {};
+      renderBracketsAndRankings();
       computeAndRenderLeaderboard();
-      renderMatches();
     });
 
     window.openLightbox = function(event, imgUrl) {
@@ -240,8 +256,8 @@
         } else if (globalStreamUrl.includes("/live/")) {
           videoId = globalStreamUrl.split("/live/")[1]?.split("?")[0];
         } else {
-          const urlParams = new URLSearchParams(globalStreamUrl.split('?')[1]);
-          videoId = urlParams.get('v');
+          const uParams = new URLSearchParams(globalStreamUrl.split('?')[1]);
+          videoId = uParams.get('v');
         }
 
         if (videoId) {
@@ -282,6 +298,31 @@
       }
     };
 
+    function renderTeamsGrid() {
+      const container = document.getElementById("teams-grid-container");
+      if (!container) return;
+      if (!teamsData.length) {
+        container.innerHTML = `<div class="text-center py-3 text-slate-500 text-xs col-span-full">No teams registered.</div>`;
+        return;
+      }
+
+      container.innerHTML = teamsData.map((team, idx) => {
+        const logoHtml = team.logo ? 
+          `<img src="${team.logo}" onclick="openLightbox(event, '${team.logo}')" class="w-8 h-8 rounded-full object-cover border border-slate-700 shrink-0 hover:scale-105 transition" title="Click to zoom logo" />` : 
+          `<div class="w-8 h-8 rounded-full bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-400 text-xs shrink-0">🛡️</div>`;
+
+        return `
+          <div class="flex items-center gap-2.5 bg-slate-950 p-2.5 rounded-xl border border-slate-800 hover:border-yellow-500/50 transition">
+            ${logoHtml}
+            <div class="overflow-hidden cursor-pointer flex-grow" onclick="openRosterModal(${idx})">
+              <div class="text-xs font-bold text-white truncate">${team.name}</div>
+              <div class="text-[9px] text-slate-400">${(team.players || []).length} Players</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
     function computeAndRenderLeaderboard() {
       const tbody = document.getElementById("leaderboard-tbody");
       if (!tbody) return;
@@ -294,17 +335,20 @@
         idx, name: team.name || `Team ${idx}`, logo: team.logo || "", points: 0
       }));
 
-      matchSchedule.forEach(match => {
-        const tAIdx = match.teamAIdx;
-        const tBIdx = match.teamBIdx;
-        if (tAIdx >= 0 && tAIdx < teamScores.length) {
-          const sumA = (match.teamARounds || []).reduce((a, b) => a + (parseInt(b) || 0), 0);
-          teamScores[tAIdx].points += (sumA - (parseInt(match.teamAPenalty) || 0));
-        }
-        if (tBIdx >= 0 && tBIdx < teamScores.length) {
-          const sumB = (match.teamBRounds || []).reduce((a, b) => a + (parseInt(b) || 0), 0);
-          teamScores[tBIdx].points += (sumB - (parseInt(match.teamBPenalty) || 0));
-        }
+      Object.values(allBrackets).forEach(bracketObj => {
+        const matches = Array.isArray(bracketObj) ? bracketObj : Object.values(bracketObj?.matches || {});
+        matches.forEach(match => {
+          const tAIdx = match.teamAIdx;
+          const tBIdx = match.teamBIdx;
+          if (tAIdx >= 0 && tAIdx < teamScores.length) {
+            const sumA = (match.teamARounds || []).reduce((a, b) => a + (parseInt(b) || 0), 0);
+            teamScores[tAIdx].points += (sumA - (parseInt(match.teamAPenalty) || 0));
+          }
+          if (tBIdx >= 0 && tBIdx < teamScores.length) {
+            const sumB = (match.teamBRounds || []).reduce((a, b) => a + (parseInt(b) || 0), 0);
+            teamScores[tBIdx].points += (sumB - (parseInt(match.teamBPenalty) || 0));
+          }
+        });
       });
 
       teamScores.sort((a, b) => b.points - a.points);
@@ -329,21 +373,149 @@
       });
     }
 
+    function renderBracketsAndRankings() {
+      const container = document.getElementById("matches-container");
+      if (!container) return;
+
+      const bracketKeys = Object.keys(allBrackets);
+      if (bracketKeys.length === 0) {
+        container.innerHTML = `<div class="text-center py-4 text-slate-500 text-xs">No brackets created yet.</div>`;
+        return;
+      }
+
+      container.innerHTML = "";
+      bracketKeys.forEach((bId) => {
+        const bracketObj = allBrackets[bId];
+        const bracketName = (typeof bracketObj === 'object' && bracketObj !== null && bracketObj.name) ? bracketObj.name : bId.replace('_', ' ');
+        const matches = Array.isArray(bracketObj) ? bracketObj : Object.values(bracketObj?.matches || {});
+
+        let bracketTeamScores = teamsData.map((team, idx) => ({
+          idx, name: team.name || `Team ${idx}`, points: 0
+        }));
+
+        matches.forEach(match => {
+          const tAIdx = match.teamAIdx;
+          const tBIdx = match.teamBIdx;
+          if (tAIdx >= 0 && tAIdx < bracketTeamScores.length) {
+            const sumA = (match.teamARounds || []).reduce((a, b) => a + (parseInt(b) || 0), 0);
+            bracketTeamScores[tAIdx].points += (sumA - (parseInt(match.teamAPenalty) || 0));
+          }
+          if (tBIdx >= 0 && tBIdx < bracketTeamScores.length) {
+            const sumB = (match.teamBRounds || []).reduce((a, b) => a + (parseInt(b) || 0), 0);
+            bracketTeamScores[tBIdx].points += (sumB - (parseInt(match.teamBPenalty) || 0));
+          }
+        });
+        bracketTeamScores.sort((a, b) => b.points - a.points);
+
+        let bracketRankingsHtml = bracketTeamScores.map((t, rIdx) => `
+          <div class="flex justify-between items-center bg-slate-900/60 px-2.5 py-1 rounded border border-slate-800/50 text-[11px]">
+            <span class="text-slate-300 font-medium">#${rIdx + 1} ${t.name}</span>
+            <span class="text-yellow-400 font-bold">${t.points} pts</span>
+          </div>
+        `).join('');
+
+        let matchesHtml = "";
+        if (matches.length === 0) {
+          matchesHtml = `<div class="text-center py-3 text-slate-500 text-xs">No matches in this bracket yet.</div>`;
+        } else {
+          matchesHtml = `
+            <div class="max-h-72 overflow-y-auto space-y-2.5 pr-1">
+              ${matches.map((match, mIdx) => {
+                const teamA = teamsData[match.teamAIdx] || { name: "Team A" };
+                const teamB = teamsData[match.teamBIdx] || { name: "Team B" };
+
+                const sumA = (match.teamARounds || []).reduce((a, b) => a + (parseInt(b) || 0), 0);
+                const penA = parseInt(match.teamAPenalty) || 0;
+                const totalPtsA = sumA - penA;
+
+                const sumB = (match.teamBRounds || []).reduce((a, b) => a + (parseInt(b) || 0), 0);
+                const penB = parseInt(match.teamBPenalty) || 0;
+                const totalPtsB = sumB - penB;
+
+                let headersHtml = '';
+                for (let r = 1; r <= totalRounds; r++) {
+                  headersHtml += `<span class="text-[9px] font-bold text-slate-400 uppercase text-center w-6">R${r}</span>`;
+                }
+                headersHtml += `<span class="text-[9px] font-bold text-slate-400 uppercase text-center w-6">Pen</span>`;
+                headersHtml += `<span class="text-[9px] font-bold text-yellow-400 uppercase text-right w-10 pr-1">Tot</span>`;
+
+                let roundBoxesA = "", roundBoxesB = "";
+                for (let r = 0; r < totalRounds; r++) {
+                  roundBoxesA += `<span class="w-6 h-6 bg-slate-900 border border-slate-800 rounded flex items-center justify-center text-[10px] font-bold text-white">${match.teamARounds?.[r] || 0}</span>`;
+                  roundBoxesB += `<span class="w-6 h-6 bg-slate-900 border border-slate-800 rounded flex items-center justify-center text-[10px] font-bold text-white">${match.teamBRounds?.[r] || 0}</span>`;
+                }
+
+                return `
+                  <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-2">
+                    <div class="flex justify-between items-center text-[10px] border-b border-slate-900 pb-1">
+                      <span class="font-black text-yellow-400">MATCH #${mIdx + 1}</span>
+                      <div class="flex items-center gap-1">
+                        ${headersHtml}
+                      </div>
+                    </div>
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="text-xs font-bold text-white flex-grow truncate">${teamA.name || teamA}</span>
+                      <div class="flex items-center gap-1 shrink-0">
+                        ${roundBoxesA}
+                        <span class="w-6 h-6 bg-red-500/10 border border-red-500/30 rounded flex items-center justify-center text-[10px] font-bold text-red-400">${penA}</span>
+                        <span class="w-10 text-right text-xs font-black text-yellow-400 pr-1">${totalPtsA}</span>
+                      </div>
+                    </div>
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="text-xs font-bold text-white flex-grow truncate">${teamB.name || teamB}</span>
+                      <div class="flex items-center gap-1 shrink-0">
+                        ${roundBoxesB}
+                        <span class="w-6 h-6 bg-red-500/10 border border-red-500/30 rounded flex items-center justify-center text-[10px] font-bold text-red-400">${penB}</span>
+                        <span class="w-10 text-right text-xs font-black text-yellow-400 pr-1">${totalPtsB}</span>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `;
+        }
+
+        container.innerHTML += `
+          <div class="bg-[#111827] p-3.5 rounded-xl border border-slate-800 space-y-3 mb-4 shadow-md">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+              <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider">${bracketName}</span>
+              <span class="text-[10px] text-slate-400">Bracket Standings</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-2">
+              ${bracketRankingsHtml}
+            </div>
+            <div class="border-t border-slate-800 pt-3">
+              <div class="text-[10px] font-bold text-slate-400 uppercase mb-2">Match Schedule</div>
+              ${matchesHtml}
+            </div>
+          </div>
+        `;
+      });
+    }
+
     window.openRosterModal = function(teamIdx) {
       const team = teamsData[teamIdx];
       if (!team) return;
       document.getElementById("modal-team-name").textContent = team.name || "Team Roster";
+      
       const logoContainer = document.getElementById("modal-team-logo");
-      logoContainer.innerHTML = team.logo ? `<img src="${team.logo}" onclick="openLightbox(event, '${team.logo}')" class="w-full h-full rounded-full object-cover" />` : `🛡️`;
+      logoContainer.innerHTML = team.logo ? 
+        `<img src="${team.logo}" onclick="openLightbox(event, '${team.logo}')" class="w-full h-full rounded-full object-cover cursor-pointer" />` : 
+        `🛡️`;
 
       const playersList = document.getElementById("modal-players-list");
       playersList.innerHTML = "";
       const players = team.players || [];
+      
       if (!players.length) {
         playersList.innerHTML = `<div class="text-center py-4 text-slate-500 text-xs italic">No players registered.</div>`;
       } else {
         players.forEach(p => {
-          const photoThumb = p.photo ? `<img src="${p.photo}" onclick="openLightbox(event, '${p.photo}')" class="w-8 h-8 rounded object-cover border border-slate-700 shrink-0" />` : `<div class="w-8 h-8 rounded bg-slate-800 border border-slate-700 flex items-center justify-center text-xs shrink-0">👤</div>`;
+          const photoThumb = p.photo ? 
+            `<img src="${p.photo}" onclick="openLightbox(event, '${p.photo}')" class="w-8 h-8 rounded object-cover border border-slate-700 shrink-0 cursor-pointer" />` : 
+            `<div class="w-8 h-8 rounded bg-slate-800 border border-slate-700 flex items-center justify-center text-xs shrink-0">👤</div>`;
+            
           playersList.innerHTML += `
             <div class="flex items-center gap-3 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
               ${photoThumb}
@@ -351,75 +523,17 @@
             </div>`;
         });
       }
-      document.getElementById("roster-modal").classList.remove("hidden");
+      
+      const modal = document.getElementById("roster-modal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
     };
 
     window.closeRosterModal = function() {
-      document.getElementById("roster-modal").classList.add("hidden");
+      const modal = document.getElementById("roster-modal");
+      modal.classList.remove("flex");
+      modal.classList.add("hidden");
     };
-
-    function renderMatches() {
-      const container = document.getElementById("matches-container");
-      if (!container) return;
-      if (!matchSchedule.length) {
-        container.innerHTML = `<div class="text-center py-4 text-slate-500 text-xs">No matches scheduled yet.</div>`;
-        return;
-      }
-
-      container.innerHTML = "";
-      matchSchedule.forEach((match, mIdx) => {
-        const teamA = teamsData[match.teamAIdx] || { name: "Team A", logo: "" };
-        const teamB = teamsData[match.teamBIdx] || { name: "Team B", logo: "" };
-
-        const sumA = (match.teamARounds || []).reduce((a, b) => a + (parseInt(b) || 0), 0);
-        const penA = parseInt(match.teamAPenalty) || 0;
-        const totalPtsA = sumA - penA;
-
-        const sumB = (match.teamBRounds || []).reduce((a, b) => a + (parseInt(b) || 0), 0);
-        const penB = parseInt(match.teamBPenalty) || 0;
-        const totalPtsB = sumB - penB;
-
-        let headersHtml = '';
-        for (let r = 1; r <= totalRounds; r++) {
-          headersHtml += `<span class="text-[9px] font-bold text-slate-400 uppercase text-center w-7">R${r}</span>`;
-        }
-        headersHtml += `<span class="text-[9px] font-bold text-slate-400 uppercase text-center w-7">Pen</span>`;
-        headersHtml += `<span class="text-[9px] font-bold text-yellow-400 uppercase text-right w-12 pr-1">Total</span>`;
-
-        let roundBoxesA = "", roundBoxesB = "";
-        for (let r = 0; r < totalRounds; r++) {
-          roundBoxesA += `<span class="w-7 h-7 bg-slate-900 border border-slate-800 rounded flex items-center justify-center text-[11px] font-bold text-white">${match.teamARounds?.[r] || 0}</span>`;
-          roundBoxesB += `<span class="w-7 h-7 bg-slate-900 border border-slate-800 rounded flex items-center justify-center text-[11px] font-bold text-white">${match.teamBRounds?.[r] || 0}</span>`;
-        }
-
-        container.innerHTML += `
-          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
-            <div class="flex justify-between items-center text-[10px] border-b border-slate-900 pb-1.5">
-              <span class="font-black text-yellow-400">MATCH #${match.id || (mIdx + 1)}</span>
-              <div class="flex items-center gap-1">
-                ${headersHtml}
-              </div>
-            </div>
-            <div class="flex items-center justify-between gap-3">
-              <span class="text-xs font-bold text-white flex-grow break-words leading-tight">${teamA.name}</span>
-              <div class="flex items-center gap-1 shrink-0">
-                ${roundBoxesA}
-                <span class="w-7 h-7 bg-red-500/10 border border-red-500/30 rounded flex items-center justify-center text-[11px] font-bold text-red-400">${penA}</span>
-                <span class="w-12 text-right text-xs font-black text-yellow-400 pr-1">${totalPtsA}</span>
-              </div>
-            </div>
-            <div class="flex items-center justify-between gap-3">
-              <span class="text-xs font-bold text-white flex-grow break-words leading-tight">${teamB.name}</span>
-              <div class="flex items-center gap-1 shrink-0">
-                ${roundBoxesB}
-                <span class="w-7 h-7 bg-red-500/10 border border-red-500/30 rounded flex items-center justify-center text-[11px] font-bold text-red-400">${penB}</span>
-                <span class="w-12 text-right text-xs font-black text-yellow-400 pr-1">${totalPtsB}</span>
-              </div>
-            </div>
-          </div>
-        `;
-      });
-    }
   </script>
 </body>
 </html>
