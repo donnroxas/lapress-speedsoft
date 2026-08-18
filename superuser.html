@@ -12,15 +12,18 @@
   <div id="auth-container" class="mt-20 bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-2xl max-w-sm mx-auto text-center">
     <div class="text-3xl mb-2">⚡</div>
     <h1 class="text-base font-black uppercase text-yellow-400 tracking-wider mb-1">SuperUser Authentication</h1>
-    <p class="text-xs text-slate-400 mb-4">Enter master security key to access root admin control.</p>
+    <p class="text-xs text-slate-400 mb-4">Sign in with your registered Firebase admin credentials.</p>
     
-    <input type="password" id="passkey-input" placeholder="Enter Master Passkey" 
+    <input type="email" id="email-input" placeholder="Admin Email" 
+           class="w-full bg-slate-950 border border-slate-800 text-white text-xs px-3 py-2.5 rounded-lg mb-2.5 text-center focus:outline-none focus:border-yellow-400 transition" />
+    
+    <input type="password" id="password-input" placeholder="Password" 
            class="w-full bg-slate-950 border border-slate-800 text-white text-xs px-3 py-2.5 rounded-lg mb-3 text-center focus:outline-none focus:border-yellow-400 transition" />
     
-    <button onclick="loginSuperUser()" class="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-950 font-bold text-xs py-2.5 rounded-lg transition uppercase tracking-wide">
+    <button id="auth-btn" class="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-950 font-bold text-xs py-2.5 rounded-lg transition uppercase tracking-wide">
       Authenticate
     </button>
-    <p id="auth-error" class="text-red-400 text-[11px] mt-2 hidden">Invalid Master Key</p>
+    <p id="auth-error" class="text-red-400 text-[11px] mt-2 hidden">Invalid credentials or unauthorized user.</p>
   </div>
 
   <!-- DASHBOARD CONTAINER (HIDDEN UNTIL AUTHENTICATED) -->
@@ -33,7 +36,7 @@
         </h1>
         <p class="text-[11px] text-slate-400">Root Management & Multi-Room Control</p>
       </div>
-      <button onclick="logoutSuperUser()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-1.5 rounded-lg border border-slate-700">
+      <button id="logout-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-1.5 rounded-lg border border-slate-700">
         Lock
       </button>
     </header>
@@ -58,6 +61,7 @@
   <!-- FIREBASE & SUPERUSER LOGIC -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
@@ -72,36 +76,50 @@
     };
 
     const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
     const db = getDatabase(app);
 
-    // MASTER PASSKEY
-    const MASTER_PASSKEY = "admin123";
+    function loginSuperUser() {
+      const email = document.getElementById("email-input").value;
+      const password = document.getElementById("password-input").value;
+      const errorEl = document.getElementById("auth-error");
 
-    window.loginSuperUser = function() {
-      const input = document.getElementById("passkey-input").value;
-      if (input === MASTER_PASSKEY) {
-        sessionStorage.setItem("is_superuser", "true");
+      signInWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          errorEl.classList.add("hidden");
+          showDashboard();
+        })
+        .catch((error) => {
+          errorEl.textContent = error.message;
+          errorEl.classList.remove("hidden");
+        });
+    }
+
+    function logoutSuperUser() {
+      signOut(auth).then(() => {
+        location.reload();
+      }).catch((error) => {
+        console.error("Sign out error", error);
+      });
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
         showDashboard();
       } else {
-        document.getElementById("auth-error").classList.remove("hidden");
+        showAuthScreen();
       }
-    };
-
-    window.logoutSuperUser = function() {
-      sessionStorage.removeItem("is_superuser");
-      location.reload();
-    };
-
-    function checkAuth() {
-      if (sessionStorage.getItem("is_superuser") === "true") {
-        showDashboard();
-      }
-    }
+    });
 
     function showDashboard() {
       document.getElementById("auth-container").classList.add("hidden");
       document.getElementById("dashboard-container").classList.remove("hidden");
       listenToRooms();
+    }
+
+    function showAuthScreen() {
+      document.getElementById("auth-container").classList.remove("hidden");
+      document.getElementById("dashboard-container").classList.add("hidden");
     }
 
     function listenToRooms() {
@@ -130,10 +148,12 @@
       // 1. Check for default root-level room
       if (rootData.room_settings || rootData.round_matches || rootData.team_profiles) {
         const rootName = rootData.room_settings?.roomName || rootData.roomName || "LA PRESS ARENA (Default)";
+        const rootPassword = rootData.room_settings?.adminPassword || rootData.room_settings?.password || rootData.adminPassword || "N/A";
         rooms.push({
           id: "default",
           name: rootName,
-          path: ""
+          path: "",
+          adminPassword: rootPassword
         });
       }
 
@@ -148,22 +168,31 @@
             rData.title || 
             rData.name;
 
-          // Search one level deeper in sub-keys if not found
-          if (!foundName && typeof rData === 'object') {
+          let foundPassword = 
+            rData.room_settings?.adminPassword || 
+            rData.room_settings?.password || 
+            rData.adminPassword || 
+            rData.password;
+
+          if ((!foundName || !foundPassword) && typeof rData === 'object') {
             for (const subKey in rData) {
-              if (rData[subKey] && typeof rData[subKey] === 'object' && rData[subKey].roomName) {
-                foundName = rData[subKey].roomName;
-                break;
+              if (rData[subKey] && typeof rData[subKey] === 'object') {
+                if (!foundName && rData[subKey].roomName) foundName = rData[subKey].roomName;
+                if (!foundPassword && (rData[subKey].adminPassword || rData[subKey].password)) {
+                  foundPassword = rData[subKey].adminPassword || rData[subKey].password;
+                }
               }
             }
           }
 
           const roomName = foundName || `Room (${key.substring(0, 8)})`;
+          const roomPassword = foundPassword || "N/A";
 
           rooms.push({
             id: key,
             name: roomName,
-            path: `rooms/${key}`
+            path: `rooms/${key}`,
+            adminPassword: roomPassword
           });
         });
       }
@@ -177,40 +206,46 @@
       }
 
       rooms.forEach((room) => {
-        const safeRoomName = room.name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        const itemEl = document.createElement("div");
+        itemEl.className = "bg-slate-950 p-3 rounded-lg border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3";
 
-        listContainer.innerHTML += `
-          <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-bold text-white">${room.name}</span>
-                <span class="text-[9px] bg-slate-900 border border-slate-800 text-slate-400 px-1.5 py-0.5 rounded uppercase">ID: ${room.id}</span>
-              </div>
-              <p class="text-[10px] text-slate-500 mt-0.5">Database Path: ${room.path ? '/' + room.path : 'Root Level'}</p>
+        itemEl.innerHTML = `
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-white">${escapeHtml(room.name)}</span>
+              <span class="text-[9px] bg-slate-900 border border-slate-800 text-slate-400 px-1.5 py-0.5 rounded uppercase">ID: ${room.id}</span>
             </div>
-
-            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-              <a href="admin.html${room.id !== 'default' ? '?room=' + room.id : ''}" target="_blank" 
-                 class="bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-400 border border-yellow-400/30 text-xs font-semibold px-2.5 py-1.5 rounded transition text-center">
-                ⚙️ Admin Mode
-              </a>
-
-              <a href="room.html${room.id !== 'default' ? '?room=' + room.id : ''}" target="_blank" 
-                 class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold px-2.5 py-1.5 rounded transition text-center">
-                👁️ View Room
-              </a>
-
-              <button onclick="deleteRoom('${room.path}', '${safeRoomName}')" 
-                      class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-semibold px-2.5 py-1.5 rounded transition">
-                🗑️ Delete
-              </button>
+            <div class="flex items-center gap-2 mt-1">
+              <p class="text-[10px] text-slate-500">Database Path: ${room.path ? '/' + room.path : 'Root Level'}</p>
+              <span class="text-[10px] text-yellow-400 bg-yellow-400/10 border border-yellow-400/20 px-2 py-0.5 rounded font-mono">🔑 Pass: ${escapeHtml(room.adminPassword)}</span>
             </div>
           </div>
+          <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <a href="admin.html${room.id !== 'default' ? '?room=' + room.id : ''}" target="_blank" 
+               class="bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-400 border border-yellow-400/30 text-xs font-semibold px-2.5 py-1.5 rounded transition text-center">
+              ⚙️ Admin Mode
+            </a>
+            <a href="room.html${room.id !== 'default' ? '?room=' + room.id : ''}" target="_blank" 
+               class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold px-2.5 py-1.5 rounded transition text-center">
+              👁️ View Room
+            </a>
+            <button class="delete-btn bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-semibold px-2.5 py-1.5 rounded transition" data-path="${room.path}" data-name="${escapeHtml(room.name)}">
+              🗑️ Delete
+            </button>
+          </div>
         `;
+
+        itemEl.querySelector(".delete-btn").addEventListener("click", (e) => {
+          const path = e.currentTarget.getAttribute("data-path");
+          const roomName = e.currentTarget.getAttribute("data-name");
+          deleteRoom(path, roomName);
+        });
+
+        listContainer.appendChild(itemEl);
       });
     }
 
-    window.deleteRoom = function(path, roomName) {
+    function deleteRoom(path, roomName) {
       const confirmDelete = confirm(`⚠️ ARE YOU SURE?\n\nThis will permanently delete "${roomName}" along with all its settings, teams, and match scores!`);
       
       if (!confirmDelete) return;
@@ -224,9 +259,17 @@
       }
 
       alert(`Room "${roomName}" has been deleted.`);
-    };
+    }
 
-    checkAuth();
+    function escapeHtml(str) {
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    document.getElementById("auth-btn").addEventListener("click", loginSuperUser);
+    document.getElementById("password-input").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") loginSuperUser();
+    });
+    document.getElementById("logout-btn").addEventListener("click", logoutSuperUser);
   </script>
 </body>
 </html>
