@@ -1,93 +1,147 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LA Press Speedsoft - Tournament Hub & Scores</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tournament Admin Panel - LA Press Speedsoft</title>
+  <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            dark: { 900: '#111827', 950: '#0b0f19' }
+          }
+        }
+      }
+    }
+  </script>
   <style>
-    /* Force date picker icon to be visible and white/yellow on dark background */
-    input[type="date"]::-webkit-calendar-picker-indicator {
-      filter: invert(1) brightness(1.5);
-      cursor: pointer;
+    input[type="date"] {
+      color-scheme: dark;
     }
   </style>
 </head>
-<body class="bg-[#0b0f19] text-white p-4 max-w-2xl mx-auto min-h-screen pb-16 relative font-sans">
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen font-sans antialiased pb-16">
 
-  <!-- Header -->
-  <header class="mb-6 flex justify-between items-center">
-    <div>
-      <h1 class="text-xl font-black tracking-wide uppercase text-yellow-400">LA PRESS SPEEDSOFT</h1>
-      <p class="text-xs text-slate-400 mt-0.5">Live Tournament Hub & Scores</p>
-    </div>
-    <button onclick="openCreateModal()" class="bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl transition shadow-lg shadow-yellow-400/10 cursor-pointer">
-      + Create Room
-    </button>
-  </header>
+  <div class="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
+    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800 pb-4 gap-4">
+      <div>
+        <h1 class="text-sm font-black text-yellow-400 tracking-wider uppercase">⚡ Tournament Admin Panel</h1>
+        <p class="text-xs text-slate-400">Manage brackets, match scores, custom rounds, penalties, teams, logos, and player photos.</p>
+      </div>
+      
+      <div class="flex items-center gap-2 flex-wrap">
+        <a href="index.html" class="bg-[#111827] hover:bg-slate-800 border border-slate-800 text-slate-200 text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer">
+          🏠 Home Portal
+        </a>
+        <a id="view-room-btn" href="room.html" target="_blank" class="bg-[#111827] hover:bg-slate-800 border border-slate-800 text-slate-200 text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer">
+          👁️ View Live Room
+        </a>
+        <button onclick="manualSave()" class="bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-xs font-black px-3.5 py-2 rounded-xl transition shadow-lg shadow-yellow-400/10 cursor-pointer">
+          💾 Save All
+        </button>
 
-  <!-- SEARCH & FILTER BAR -->
-  <div class="flex gap-2 mb-6">
-    <div class="relative flex-1">
-      <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-500">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-      </span>
-      <input type="text" id="search-input" oninput="filterRooms()" placeholder="Search room or host..." class="w-full bg-[#111827] border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-slate-700 transition" />
-    </div>
-    <select id="status-filter" onchange="filterRooms()" class="bg-[#111827] border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-slate-700 transition cursor-pointer">
-      <option value="all">All Status</option>
-      <option value="live">Live Now</option>
-    </select>
+        <div id="connection-status" class="text-[10px] bg-[#111827] border border-slate-800 px-3 py-2 rounded-xl text-slate-400 font-bold">
+          Connecting...
+        </div>
+      </div>
+    </header>
+
+    <!-- Room Settings & Controls Section -->
+    <section class="bg-[#111827] rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3">
+      <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wide">⚙️ Room Settings & Security</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-[10px] text-slate-400 mb-1 uppercase font-bold">Admin Security</label>
+          <button onclick="openChangePasswordModal()" class="w-full bg-[#0b0f19] hover:bg-slate-900 border border-slate-800 text-yellow-400 text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer">
+            🔒 Change Admin Password
+          </button>
+        </div>
+        <div>
+          <label class="block text-[10px] text-slate-400 mb-1 uppercase font-bold">Tournament Date</label>
+          <input type="date" id="tournament-date-input" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400 cursor-pointer">
+        </div>
+      </div>
+      <div class="flex justify-between items-center pt-3 border-t border-slate-800/80">
+        <button onclick="saveRoomSettings()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-4 py-2 rounded-xl transition cursor-pointer">Update Settings</button>
+        <button onclick="deleteCurrentRoom()" class="bg-red-950/50 hover:bg-red-900/50 border border-red-900/50 text-red-400 text-xs font-bold px-4 py-2 rounded-xl transition cursor-pointer">🗑️ Delete Room</button>
+      </div>
+    </section>
+
+    <!-- Participating Teams & Players Section -->
+    <section class="bg-[#111827] rounded-2xl p-4 border border-slate-800 shadow-xl">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wide">🛡️ Participating Teams, Logos & Player Photos</h2>
+        <button onclick="addNewTeam()" class="bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-xs font-black px-3 py-2 rounded-xl transition cursor-pointer shadow-md shadow-yellow-400/10">+ Add Team</button>
+      </div>
+      <div id="admin-teams-container" class="space-y-4">
+        <div class="text-center py-6 text-slate-500 text-xs">Loading teams...</div>
+      </div>
+    </section>
+
+    <!-- Brackets & Match Scores Section -->
+    <section class="bg-[#111827] rounded-2xl p-4 border border-slate-800 shadow-xl">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wide">⚔️ Brackets & Match Scores</h2>
+        <button onclick="addNewBracket()" class="bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-xs font-black px-3 py-2 rounded-xl transition cursor-pointer shadow-md shadow-yellow-400/10">+ New Bracket</button>
+      </div>
+      <div id="admin-brackets-container" class="space-y-6">
+        <div class="text-center py-6 text-slate-500 text-xs">Loading brackets...</div>
+      </div>
+    </section>
   </div>
 
-  <!-- ROOMS LIST CONTAINER -->
-  <section id="rooms-container" class="space-y-4">
-    <div class="text-center py-10 text-slate-500 text-xs bg-[#111827]/50 rounded-2xl border border-slate-800/80">
-      Loading tournament rooms...
-    </div>
-  </section>
-
-  <!-- CREATE ROOM MODAL -->
-  <div id="create-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-[#111827] border border-slate-800 rounded-2xl w-full max-w-md p-5 shadow-2xl relative space-y-4">
-      <button onclick="closeCreateModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer">✕</button>
-      
-      <div class="border-b border-slate-800 pb-3 pr-8">
-        <h3 class="text-sm font-black text-yellow-400 uppercase tracking-wide">Create Tournament Room</h3>
-        <p class="text-[10px] text-slate-400">Set up a new live scoreboard room</p>
-      </div>
-
+  <!-- Add Match Modal with Round Selector -->
+  <div id="add-match-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-[#111827] border border-slate-800 rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
+      <h3 class="text-sm font-black text-yellow-400 uppercase tracking-wider">⚔️ Add New Match</h3>
+      <input type="hidden" id="modal-target-bracket-id">
       <div class="space-y-3">
         <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Room Name</label>
-          <input type="text" id="new-room-name" placeholder="e.g. LA Press Winter Cup" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-400" />
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tournament Date</label>
-          <input type="date" id="new-room-date" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-400 cursor-pointer" />
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Admin Password</label>
-          <input type="password" id="new-room-pass" placeholder="Password to edit matches" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-400" />
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Confirm Password</label>
-          <input type="password" id="new-room-pass-confirm" placeholder="Re-enter password" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-400" />
+          <label class="block text-[10px] text-slate-400 mb-1 uppercase font-bold">Number of Rounds</label>
+          <select id="modal-match-rounds" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400 cursor-pointer font-bold">
+            <option value="1">1 Round</option>
+            <option value="3" selected>3 Rounds (Standard)</option>
+            <option value="5">5 Rounds</option>
+            <option value="7">7 Rounds</option>
+          </select>
         </div>
       </div>
-
-      <div class="pt-2">
-        <button onclick="createNewRoom()" class="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black text-xs py-2.5 rounded-xl transition shadow-lg shadow-yellow-400/10 cursor-pointer">
-          Create Room & Enter Dashboard 🚀
-        </button>
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+        <button onclick="closeAddMatchModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3.5 py-2 rounded-xl transition cursor-pointer">Cancel</button>
+        <button onclick="confirmAddMatch()" class="bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black text-xs px-4 py-2 rounded-xl transition cursor-pointer">Create Match</button>
       </div>
     </div>
   </div>
 
-  <!-- FIREBASE & PORTAL LOGIC -->
+  <!-- Change Password Modal -->
+  <div id="password-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-[#111827] border border-slate-800 rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
+      <h3 class="text-sm font-black text-yellow-400 uppercase tracking-wider">🔒 Change Admin Password</h3>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-[10px] text-slate-400 mb-1 uppercase font-bold">New Password</label>
+          <input type="password" id="modal-new-password" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400" placeholder="Enter new password">
+        </div>
+        <div>
+          <label class="block text-[10px] text-slate-400 mb-1 uppercase font-bold">Confirm New Password</label>
+          <input type="password" id="modal-confirm-password" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400" placeholder="Confirm new password">
+          <p id="password-match-error" class="text-[10px] text-red-400 mt-1 hidden">Passwords do not match!</p>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+        <button onclick="closeChangePasswordModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3.5 py-2 rounded-xl transition cursor-pointer">Cancel</button>
+        <button onclick="submitChangePassword()" class="bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black text-xs px-4 py-2 rounded-xl transition cursor-pointer">Update Password</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, onValue, set, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCnDxO6WzA9n4XyF_-0QhT3SksKaUV9C7Q",
@@ -100,266 +154,589 @@
       measurementId: "G-S5G8F8ZHXH"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    const statusEl = document.getElementById("connection-status");
 
-    let allRoomsCache = [];
-    let countdownInterval = null;
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomParam = urlParams.get('room');
+    const dbBasePath = roomParam ? `rooms/${roomParam}` : "rooms/main";
+    
+    const viewRoomBtn = document.getElementById("view-room-btn");
+    viewRoomBtn.href = roomParam ? `room.html?room=${roomParam}` : `room.html`;
 
-    async function loadRoomsPortal() {
-      const container = document.getElementById("rooms-container");
-      
-      try {
-        const roomsRef = ref(db, 'rooms');
-        const snapshot = await get(roomsRef);
+    try {
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+
+      window.db = db;
+      window.dbBasePath = dbBasePath;
+      window.teamsList = [];
+      let bracketsData = {};
+
+      const teamsRef = ref(db, `${dbBasePath}/team_profiles`);
+      const bracketsRef = ref(db, `${dbBasePath}/brackets`);
+      const roomSettingsRef = ref(db, `${dbBasePath}/room_settings`);
+
+      onValue(ref(db, ".info/connected"), (snap) => {
+        if (snap.val() === true) {
+          statusEl.textContent = "Live Connected";
+          statusEl.className = "text-[10px] bg-emerald-950/50 border border-emerald-900/50 px-3 py-2 rounded-xl text-emerald-400 font-bold";
+        } else {
+          statusEl.textContent = "Connecting...";
+          statusEl.className = "text-[10px] bg-[#111827] border border-slate-800 px-3 py-2 rounded-xl text-slate-400 font-bold";
+        }
+      });
+
+      // Load Room Settings
+      onValue(roomSettingsRef, (snapshot) => {
+        const settings = snapshot.val() || {};
         
-        if (!snapshot.exists()) {
-          container.innerHTML = `
-            <div class="text-center py-10 bg-[#111827] rounded-2xl border border-slate-800 p-6 space-y-3">
-              <p class="text-xs text-slate-400">No active tournament rooms found.</p>
-              <button onclick="openCreateModal()" class="px-4 py-2 bg-yellow-400 text-slate-950 font-black text-xs rounded-xl cursor-pointer">Create First Room</button>
-            </div>`;
+        if (!settings.adminPassword) {
+          update(roomSettingsRef, { adminPassword: "admin" }).catch(err => console.error("Default password init error:", err));
+        }
+
+        const storedDate = settings.roomDate || settings.tournamentDate;
+        if (storedDate !== undefined) {
+          const dateInput = document.getElementById("tournament-date-input");
+          if (dateInput) dateInput.value = storedDate;
+        }
+      }, (err) => console.error("Room settings error:", err));
+
+      onValue(teamsRef, (snapshot) => {
+        const rawTeams = snapshot.val();
+        window.teamsList = Array.isArray(rawTeams) ? rawTeams : (rawTeams ? Object.values(rawTeams) : [
+          { name: "Team Alpha", logo: "", players: [] },
+          { name: "Team Bravo", logo: "", players: [] }
+        ]);
+        
+        window.teamsList = window.teamsList.map(t => {
+          if (typeof t === 'string') {
+            return { name: t, logo: "", players: [] };
+          }
+          if (!t.logo) t.logo = "";
+          if (!t.players) t.players = [];
+          t.players = t.players.map(p => {
+            if (typeof p === 'string') {
+              return { name: p, photo: "" };
+            }
+            if (!p.photo) p.photo = "";
+            return p;
+          });
+          return t;
+        });
+        renderAdminTeams();
+        renderAdminBrackets();
+      }, (err) => console.error("Teams error:", err));
+
+      onValue(bracketsRef, (snapshot) => {
+        bracketsData = snapshot.val() || {};
+        renderAdminBrackets();
+      }, (err) => console.error("Brackets error:", err));
+
+      // Render Admin Teams & Upload Controls
+      window.renderAdminTeams = function() {
+        const container = document.getElementById("admin-teams-container");
+        if (!container) return;
+        if (!window.teamsList || window.teamsList.length === 0) {
+          container.innerHTML = `<div class="text-center py-4 text-slate-500 text-xs">No teams found. Click "+ Add Team" to start.</div>`;
           return;
         }
 
-        const roomsData = snapshot.val();
-        allRoomsCache = Object.keys(roomsData).map(rId => {
-          const roomObj = roomsData[rId];
-          const settings = roomObj.room_settings || {};
-          const roomName = settings.roomName || rId.replace(/-/g, ' ').toUpperCase();
-          const streamUrl = settings.streamUrl || "";
-          const teamsMap = roomObj.team_profiles || {};
-          const teamCount = Object.keys(teamsMap).length;
-          const isLiveNow = streamUrl && streamUrl.trim() !== "";
-          const rawDate = settings.roomDate || new Date().toISOString().split('T')[0];
+        container.innerHTML = window.teamsList.map((team, tIdx) => {
+          const teamName = team.name || '';
+          const teamLogo = team.logo || '';
+          const players = team.players || [];
 
-          const [y, m, d] = rawDate.split('-').map(Number);
-          const displayDate = new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          return `
+            <div class="bg-[#0b0f19] border border-slate-800 rounded-xl p-3.5 space-y-3">
+              <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 justify-between">
+                <div class="flex items-center gap-3 w-full sm:w-auto">
+                  <span class="text-[10px] text-slate-500 font-mono font-bold">#${tIdx + 1}</span>
+                  
+                  <!-- Team Logo Upload Box -->
+                  <div class="relative group w-11 h-11 bg-[#111827] border border-slate-700 hover:border-yellow-400 rounded-xl overflow-hidden flex items-center justify-center shrink-0 cursor-pointer shadow transition">
+                    ${teamLogo ? `<img src="${teamLogo}" class="w-full h-full object-cover">` : `<span class="text-[10px] font-bold text-yellow-400">Logo</span>`}
+                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-[9px] text-white font-bold">Upload</div>
+                    <input type="file" accept="image/*" onchange="uploadTeamLogo(${tIdx}, event)" class="absolute inset-0 opacity-0 cursor-pointer" title="Upload Team Logo">
+                  </div>
 
-          return {
-            id: rId,
-            name: roomName,
-            streamUrl,
-            teamCount,
-            isLiveNow,
-            rawDate,
-            displayDate,
-            adminPassword: settings.adminPassword || "admin"
+                  <input type="text" value="${teamName}" onchange="updateTeamName(${tIdx}, this.value)" class="w-full sm:w-56 bg-[#111827] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-bold focus:outline-none focus:border-yellow-400" placeholder="Team Name">
+                </div>
+
+                <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  ${teamLogo ? `<button onclick="removeTeamLogo(${tIdx})" class="text-slate-400 hover:text-red-400 text-[10px] px-2 py-1 bg-[#111827] border border-slate-800 rounded-lg">Remove Logo</button>` : ``}
+                  <button onclick="deleteTeam(${tIdx})" class="text-red-400 hover:text-red-300 text-xs px-3 py-1.5 bg-red-950/30 border border-red-900/40 rounded-xl font-bold cursor-pointer">Delete Team</button>
+                </div>
+              </div>
+
+              <!-- Players Roster Section -->
+              <div class="pl-3 sm:pl-12 space-y-2 pt-2 border-t border-slate-800/80">
+                <div class="flex justify-between items-center text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+                  <span>Roster Players (${players.length})</span>
+                  <button onclick="addPlayerToTeam(${tIdx})" class="text-yellow-400 hover:text-yellow-300 font-black cursor-pointer">+ Add Player</button>
+                </div>
+                <div class="space-y-2">
+                  ${players.length === 0 ? `<div class="text-[10px] text-slate-500 italic">No players added yet.</div>` : players.map((player, pIdx) => {
+                    const playerName = typeof player === 'string' ? player : (player.name || '');
+                    const playerPhoto = typeof player === 'string' ? '' : (player.photo || '');
+
+                    return `
+                      <div class="flex items-center gap-2 bg-[#111827] border border-slate-800/80 p-2 rounded-xl">
+                        <!-- Player Photo Upload Box -->
+                        <div class="relative group w-8 h-8 bg-slate-900 border border-slate-700 hover:border-yellow-400 rounded-lg overflow-hidden flex items-center justify-center shrink-0 cursor-pointer shadow transition">
+                          ${playerPhoto ? `<img src="${playerPhoto}" class="w-full h-full object-cover">` : `<span class="text-[9px] font-bold text-yellow-400">Pic</span>`}
+                          <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-[8px] text-white">📷</div>
+                          <input type="file" accept="image/*" onchange="uploadPlayerPhoto(${tIdx}, ${pIdx}, event)" class="absolute inset-0 opacity-0 cursor-pointer" title="Upload Player Photo">
+                        </div>
+
+                        <input type="text" value="${playerName}" onchange="updatePlayerName(${tIdx}, ${pIdx}, this.value)" class="w-full bg-transparent border-0 text-xs text-slate-200 focus:outline-none focus:ring-0 font-bold" placeholder="Player Name">
+                        
+                        ${playerPhoto ? `<button onclick="removePlayerPhoto(${tIdx}, ${pIdx})" class="text-slate-500 hover:text-red-400 text-[10px] px-1.5" title="Remove Photo">✕ Pic</button>` : ``}
+                        <button onclick="deletePlayerFromTeam(${tIdx}, ${pIdx})" class="text-red-400 hover:text-red-300 text-xs px-2 cursor-pointer font-bold">✕</button>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      };
+
+      window.renderAdminBrackets = function() {
+        const container = document.getElementById("admin-brackets-container");
+        if (!container) return;
+        const bracketKeys = Object.keys(bracketsData || {});
+        if (bracketKeys.length === 0) {
+          container.innerHTML = `<div class="text-center py-4 text-slate-500 text-xs">No brackets created yet. Click "+ New Bracket" above.</div>`;
+          return;
+        }
+
+        container.innerHTML = bracketKeys.map(bracketId => {
+          const bracketObj = bracketsData[bracketId];
+          let bracketName = bracketId.replace('_', ' ');
+          let matches = [];
+
+          if (Array.isArray(bracketObj)) {
+            matches = bracketObj;
+          } else if (bracketObj && typeof bracketObj === 'object') {
+            if (bracketObj.name) bracketName = bracketObj.name;
+            if (bracketObj.matches) {
+              matches = Array.isArray(bracketObj.matches) ? bracketObj.matches : Object.values(bracketObj.matches);
+            } else {
+              matches = Object.values(bracketObj).filter(val => typeof val === 'object' && val !== null && !Array.isArray(val) && val.teamAIdx !== undefined);
+            }
+          }
+
+          return `
+            <div class="bg-[#0b0f19] border border-slate-800 rounded-xl p-3.5 space-y-3">
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800 pb-2.5 gap-2">
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                  <input type="text" value="${bracketName}" onchange="updateBracketName('${bracketId}', this.value)" class="bg-[#111827] border border-slate-800 rounded-xl px-3 py-1.5 text-xs font-black text-yellow-400 uppercase w-full sm:w-48 focus:outline-none focus:border-yellow-400" placeholder="Bracket Name">
+                </div>
+                <div class="flex gap-2 w-full sm:w-auto justify-end">
+                  <button onclick="openAddMatchModal('${bracketId}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold px-3 py-1.5 rounded-xl cursor-pointer">+ Add Match</button>
+                  <button onclick="deleteBracket('${bracketId}')" class="text-red-400 hover:text-red-300 text-[10px] font-bold px-2 py-1.5 cursor-pointer">Delete Bracket</button>
+                </div>
+              </div>
+              <div class="space-y-4">
+                ${matches.length === 0 ? `<div class="text-center py-2 text-slate-500 text-[10px]">No matches in this bracket.</div>` : matches.map((match, mIdx) => {
+                  const teamAIdx = match.teamAIdx !== undefined ? match.teamAIdx : 0;
+                  const teamBIdx = match.teamBIdx !== undefined ? match.teamBIdx : 1;
+                  
+                  const teamAName = (window.teamsList[teamAIdx] && window.teamsList[teamAIdx].name) ? window.teamsList[teamAIdx].name : `Team A`;
+                  const teamBName = (window.teamsList[teamBIdx] && window.teamsList[teamBIdx].name) ? window.teamsList[teamBIdx].name : `Team B`;
+
+                  const roundCount = (match.teamARounds && Array.isArray(match.teamARounds)) ? match.teamARounds.length : 3;
+                  const teamARounds = match.teamARounds || new Array(roundCount).fill(0);
+                  const teamBRounds = match.teamBRounds || new Array(roundCount).fill(0);
+                  const teamAPenalty = match.teamAPenalty !== undefined ? match.teamAPenalty : 0;
+                  const teamBPenalty = match.teamBPenalty !== undefined ? match.teamBPenalty : 0;
+
+                  // Calculate totals
+                  const totalA = teamARounds.reduce((acc, val) => acc + Number(val || 0), 0) + Number(teamAPenalty || 0);
+                  const totalB = teamBRounds.reduce((acc, val) => acc + Number(val || 0), 0) + Number(teamBPenalty || 0);
+
+                  return `
+                    <div class="bg-[#111827] border border-slate-800 rounded-xl p-3 space-y-3">
+                      <!-- Match Header & Controls Row -->
+                      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-2 border-b border-slate-800/80">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <span class="text-[11px] font-black text-yellow-400 tracking-wider uppercase">MATCH #${mIdx + 1}</span>
+                          <div class="flex items-center gap-1.5 text-xs">
+                            <select onchange="updateMatchTeam('${bracketId}', ${mIdx}, 'teamAIdx', this.value)" class="bg-[#0b0f19] border border-slate-800 text-slate-200 rounded-lg px-2 py-1 text-xs cursor-pointer font-bold">
+                              ${window.teamsList.map((t, i) => `<option value="${i}" ${i === Number(teamAIdx) ? 'selected' : ''}>${t.name || t}</option>`).join('')}
+                            </select>
+                            <span class="text-slate-500 font-bold">vs</span>
+                            <select onchange="updateMatchTeam('${bracketId}', ${mIdx}, 'teamBIdx', this.value)" class="bg-[#0b0f19] border border-slate-800 text-slate-200 rounded-lg px-2 py-1 text-xs cursor-pointer font-bold">
+                              ${window.teamsList.map((t, i) => `<option value="${i}" ${i === Number(teamBIdx) ? 'selected' : ''}>${t.name || t}</option>`).join('')}
+                            </select>
+                          </div>
+                        </div>
+                        <button onclick="deleteMatchFromBracket('${bracketId}', ${mIdx})" class="text-red-400 hover:text-red-300 text-xs font-bold cursor-pointer">🗑️ Delete Match</button>
+                      </div>
+
+                      <!-- Scoreboard Layout Matrix (Matching Image Design) -->
+                      <div class="overflow-x-auto">
+                        <div class="min-w-[500px] space-y-2">
+                          <!-- Column Header Row -->
+                          <div class="grid grid-cols-[1fr_repeat(var(--rounds),minmax(0,50px))_minmax(0,55px)_minmax(0,60px)] gap-2 text-[10px] font-bold text-slate-400 px-1 uppercase tracking-wider items-center" style="--rounds: ${roundCount};">
+                            <div></div>
+                            ${Array.from({length: roundCount}, (_, rI) => `<div class="text-center">R${rI + 1}</div>`).join('')}
+                            <div class="text-center text-blue-400">PEN</div>
+                            <div class="text-center text-yellow-400">TOTAL</div>
+                          </div>
+
+                          <!-- Team A Row -->
+                          <div class="grid grid-cols-[1fr_repeat(var(--rounds),minmax(0,50px))_minmax(0,55px)_minmax(0,60px)] gap-2 items-center bg-[#0b0f19] border border-slate-800/80 p-2 rounded-xl" style="--rounds: ${roundCount};">
+                            <div class="text-xs font-bold text-slate-200 truncate px-1">${teamAName}</div>
+                            ${teamARounds.map((score, rI) => `
+                              <div>
+                                <input type="number" value="${score}" onchange="updateMatchRoundScore('${bracketId}', ${mIdx}, 'teamARounds', ${rI}, this.value)" class="w-full bg-[#111827] border border-slate-700/80 hover:border-slate-600 focus:border-yellow-400 text-white text-center font-bold text-xs py-2 rounded-lg focus:outline-none transition">
+                              </div>
+                            `).join('')}
+                            <div>
+                              <input type="number" value="${teamAPenalty}" onchange="updateMatchPenalty('${bracketId}', ${mIdx}, 'teamAPenalty', this.value)" class="w-full bg-red-950/20 border border-red-900/40 hover:border-red-900 focus:border-red-500 text-red-400 text-center font-bold text-xs py-2 rounded-lg focus:outline-none transition">
+                            </div>
+                            <div class="text-center text-xs font-black text-yellow-400 bg-[#111827] border border-slate-800 py-2 rounded-lg">
+                              ${totalA}
+                            </div>
+                          </div>
+
+                          <!-- Team B Row -->
+                          <div class="grid grid-cols-[1fr_repeat(var(--rounds),minmax(0,50px))_minmax(0,55px)_minmax(0,60px)] gap-2 items-center bg-[#0b0f19] border border-slate-800/80 p-2 rounded-xl" style="--rounds: ${roundCount};">
+                            <div class="text-xs font-bold text-slate-200 truncate px-1">${teamBName}</div>
+                            ${teamBRounds.map((score, rI) => `
+                              <div>
+                                <input type="number" value="${score}" onchange="updateMatchRoundScore('${bracketId}', ${mIdx}, 'teamBRounds', ${rI}, this.value)" class="w-full bg-[#111827] border border-slate-700/80 hover:border-slate-600 focus:border-yellow-400 text-white text-center font-bold text-xs py-2 rounded-lg focus:outline-none transition">
+                              </div>
+                            `).join('')}
+                            <div>
+                              <input type="number" value="${teamBPenalty}" onchange="updateMatchPenalty('${bracketId}', ${mIdx}, 'teamBPenalty', this.value)" class="w-full bg-red-950/20 border border-red-900/40 hover:border-red-900 focus:border-red-500 text-red-400 text-center font-bold text-xs py-2 rounded-lg focus:outline-none transition">
+                            </div>
+                            <div class="text-center text-xs font-black text-yellow-400 bg-[#111827] border border-slate-800 py-2 rounded-lg">
+                              ${totalB}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          `;
+        }).join('');
+      };
+
+      window.saveRoomSettings = function() {
+        const date = document.getElementById("tournament-date-input").value;
+        update(roomSettingsRef, { roomDate: date })
+          .then(() => alert("Room settings updated successfully!"))
+          .catch(err => alert("Failed to save settings: " + err.message));
+      };
+
+      window.openChangePasswordModal = function() {
+        document.getElementById("modal-new-password").value = "";
+        document.getElementById("modal-confirm-password").value = "";
+        document.getElementById("password-match-error").classList.add("hidden");
+        document.getElementById("password-modal").classList.remove("hidden");
+      };
+
+      window.closeChangePasswordModal = function() {
+        document.getElementById("password-modal").classList.add("hidden");
+      };
+
+      window.submitChangePassword = function() {
+        const newPass = document.getElementById("modal-new-password").value;
+        const confirmPass = document.getElementById("modal-confirm-password").value;
+        const errorEl = document.getElementById("password-match-error");
+
+        if (!newPass) {
+          errorEl.textContent = "Password cannot be empty.";
+          errorEl.classList.remove("hidden");
+          return;
+        }
+
+        if (newPass !== confirmPass) {
+          errorEl.textContent = "Passwords do not match!";
+          errorEl.classList.remove("hidden");
+          return;
+        }
+
+        errorEl.classList.add("hidden");
+        update(roomSettingsRef, { adminPassword: newPass })
+          .then(() => {
+            alert("Admin password changed successfully!");
+            closeChangePasswordModal();
+          })
+          .catch(err => alert("Failed to change password: " + err.message));
+      };
+
+      window.deleteCurrentRoom = function() {
+        if (confirm("Are you sure you want to completely delete this room and all its data? This action cannot be undone.")) {
+          remove(ref(db, dbBasePath)).then(() => {
+            alert("Room deleted successfully.");
+            window.location.href = "index.html";
+          }).catch(err => alert("Delete failed: " + err.message));
+        }
+      };
+
+      window.manualSave = function() {
+        set(bracketsRef, bracketsData).then(() => {
+          set(teamsRef, window.teamsList).then(() => {
+            alert("Brackets & teams successfully saved!");
+          });
+        }).catch(err => alert("Save failed: " + err.message));
+      };
+
+      window.addNewTeam = function() {
+        if (!window.teamsList) window.teamsList = [];
+        window.teamsList.push({ name: `Team ${window.teamsList.length + 1}`, logo: "", players: [] });
+        set(teamsRef, window.teamsList).catch(err => alert("Write failed: " + err.message));
+      };
+
+      window.updateTeamName = function(idx, value) {
+        if (typeof window.teamsList[idx] === 'string') {
+          window.teamsList[idx] = { name: value, logo: "", players: [] };
+        } else {
+          window.teamsList[idx].name = value;
+        }
+        set(teamsRef, window.teamsList).catch(err => alert("Write failed: " + err.message));
+      };
+
+      window.uploadTeamLogo = function(idx, event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const base64String = e.target.result;
+          if (typeof window.teamsList[idx] === 'string') {
+            window.teamsList[idx] = { name: window.teamsList[idx], logo: base64String, players: [] };
+          } else {
+            window.teamsList[idx].logo = base64String;
+          }
+          set(teamsRef, window.teamsList).catch(err => alert("Failed to save team logo: " + err.message));
+        };
+        reader.readAsDataURL(file);
+      };
+
+      window.removeTeamLogo = function(idx) {
+        if (typeof window.teamsList[idx] === 'object') {
+          window.teamsList[idx].logo = "";
+        }
+        set(teamsRef, window.teamsList).catch(err => alert("Failed to remove logo: " + err.message));
+      };
+
+      window.deleteTeam = function(idx) {
+        if (window.teamsList.length <= 1) {
+          alert("You must keep at least one team.");
+          return;
+        }
+        window.teamsList.splice(idx, 1);
+        set(teamsRef, window.teamsList).catch(err => alert("Write failed: " + err.message));
+      };
+
+      window.addPlayerToTeam = function(tIdx) {
+        if (!window.teamsList[tIdx].players) window.teamsList[tIdx].players = [];
+        window.teamsList[tIdx].players.push({ name: `Player ${window.teamsList[tIdx].players.length + 1}`, photo: "" });
+        set(teamsRef, window.teamsList).catch(err => alert("Failed to add player: " + err.message));
+      };
+
+      window.updatePlayerName = function(tIdx, pIdx, value) {
+        if (!window.teamsList[tIdx].players) window.teamsList[tIdx].players = [];
+        if (typeof window.teamsList[tIdx].players[pIdx] === 'string') {
+          window.teamsList[tIdx].players[pIdx] = { name: value, photo: "" };
+        } else {
+          window.teamsList[tIdx].players[pIdx].name = value;
+        }
+        set(teamsRef, window.teamsList).catch(err => alert("Failed to update player: " + err.message));
+      };
+
+      window.uploadPlayerPhoto = function(tIdx, pIdx, event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const base64String = e.target.result;
+          if (!window.teamsList[tIdx].players) window.teamsList[tIdx].players = [];
+          let currentName = "Player";
+          if (typeof window.teamsList[tIdx].players[pIdx] === 'string') {
+            currentName = window.teamsList[tIdx].players[pIdx];
+          } else if (window.teamsList[tIdx].players[pIdx].name) {
+            currentName = window.teamsList[tIdx].players[pIdx].name;
+          }
+          window.teamsList[tIdx].players[pIdx] = { name: currentName, photo: base64String };
+          set(teamsRef, window.teamsList).catch(err => alert("Failed to save player photo: " + err.message));
+        };
+        reader.readAsDataURL(file);
+      };
+
+      window.removePlayerPhoto = function(tIdx, pIdx) {
+        if (window.teamsList[tIdx].players && window.teamsList[tIdx].players[pIdx]) {
+          if (typeof window.teamsList[tIdx].players[pIdx] === 'object') {
+            window.teamsList[tIdx].players[pIdx].photo = "";
+          }
+        }
+        set(teamsRef, window.teamsList).catch(err => alert("Failed to remove player photo: " + err.message));
+      };
+
+      window.deletePlayerFromTeam = function(tIdx, pIdx) {
+        if (!window.teamsList[tIdx].players) return;
+        window.teamsList[tIdx].players.splice(pIdx, 1);
+        set(teamsRef, window.teamsList).catch(err => alert("Failed to delete player: " + err.message));
+      };
+
+      window.addNewBracket = function() {
+        const bracketKey = "Bracket_" + Date.now();
+        bracketsData[bracketKey] = {
+          name: "New Bracket",
+          matches: []
+        };
+        set(bracketsRef, bracketsData)
+          .then(() => renderAdminBrackets())
+          .catch(err => alert("Failed to create bracket: " + err.message));
+      };
+
+      window.updateBracketName = function(bracketId, newName) {
+        if (!bracketsData[bracketId]) return;
+        if (Array.isArray(bracketsData[bracketId])) {
+          bracketsData[bracketId] = {
+            name: newName,
+            matches: bracketsData[bracketId]
           };
+        } else {
+          bracketsData[bracketId].name = newName;
+        }
+        set(bracketsRef, bracketsData).catch(err => alert("Failed to update bracket name: " + err.message));
+      };
+
+      window.deleteBracket = function(bracketId) {
+        if (confirm(`Delete this bracket?`)) {
+          delete bracketsData[bracketId];
+          set(bracketsRef, bracketsData).catch(err => alert("Delete failed: " + err.message));
+        }
+      };
+
+      window.openAddMatchModal = function(bracketId) {
+        document.getElementById("modal-target-bracket-id").value = bracketId;
+        document.getElementById("modal-match-rounds").value = "3";
+        document.getElementById("add-match-modal").classList.remove("hidden");
+      };
+
+      window.closeAddMatchModal = function() {
+        document.getElementById("add-match-modal").classList.add("hidden");
+      };
+
+      window.confirmAddMatch = function() {
+        const bracketId = document.getElementById("modal-target-bracket-id").value;
+        const roundCount = Number(document.getElementById("modal-match-rounds").value) || 3;
+        closeAddMatchModal();
+
+        if (!bracketsData[bracketId]) {
+          bracketsData[bracketId] = { name: bracketId.replace('_', ' '), matches: [] };
+        }
+        
+        let matchesList = [];
+        if (Array.isArray(bracketsData[bracketId])) {
+          matchesList = bracketsData[bracketId];
+          bracketsData[bracketId] = { name: bracketId.replace('_', ' '), matches: matchesList };
+        } else if (!bracketsData[bracketId].matches) {
+          bracketsData[bracketId].matches = [];
+          matchesList = bracketsData[bracketId].matches;
+        } else {
+          matchesList = Array.isArray(bracketsData[bracketId].matches) ? bracketsData[bracketId].matches : Object.values(bracketsData[bracketId].matches);
+        }
+
+        matchesList.push({
+          id: Date.now(),
+          teamAIdx: 0,
+          teamBIdx: window.teamsList.length > 1 ? 1 : 0,
+          teamARounds: new Array(roundCount).fill(0),
+          teamBRounds: new Array(roundCount).fill(0),
+          teamAPenalty: 0,
+          teamBPenalty: 0
         });
 
-        renderRoomsList(allRoomsCache);
+        bracketsData[bracketId].matches = matchesList;
+        set(bracketsRef, bracketsData).catch(err => alert("Failed to add match: " + err.message));
+      };
+
+      window.deleteMatchFromBracket = function(bracketId, matchIdx) {
+        const bracketObj = bracketsData[bracketId];
+        if (!bracketObj) return;
+
+        let matchesList = Array.isArray(bracketObj) ? bracketObj : (bracketObj.matches ? (Array.isArray(bracketObj.matches) ? bracketObj.matches : Object.values(bracketObj.matches)) : []);
         
-        if (countdownInterval) clearInterval(countdownInterval);
-        countdownInterval = setInterval(updateCountdowns, 1000);
+        matchesList.splice(matchIdx, 1);
 
-      } catch (err) {
-        console.error(err);
-        container.innerHTML = `<div class="text-center py-6 text-red-400 text-xs">Error loading rooms from database.</div>`;
-      }
+        if (Array.isArray(bracketObj)) {
+          bracketsData[bracketId] = matchesList;
+        } else {
+          bracketsData[bracketId].matches = matchesList;
+        }
+
+        set(bracketsRef, bracketsData).catch(err => alert("Delete failed: " + err.message));
+      };
+
+      window.updateMatchTeam = function(bracketId, matchIdx, field, val) {
+        const bracketObj = bracketsData[bracketId];
+        if (!bracketObj) return;
+
+        let matchesList = Array.isArray(bracketObj) ? bracketObj : (bracketObj.matches ? (Array.isArray(bracketObj.matches) ? bracketObj.matches : Object.values(bracketObj.matches)) : []);
+        
+        if (matchesList[matchIdx]) {
+          matchesList[matchIdx][field] = Number(val);
+          if (Array.isArray(bracketObj)) {
+            bracketsData[bracketId] = matchesList;
+          } else {
+            bracketsData[bracketId].matches = matchesList;
+          }
+          set(bracketsRef, bracketsData).catch(err => alert("Update failed: " + err.message));
+        }
+      };
+
+      window.updateMatchRoundScore = function(bracketId, matchIdx, roundsField, roundIdx, val) {
+        const bracketObj = bracketsData[bracketId];
+        if (!bracketObj) return;
+
+        let matchesList = Array.isArray(bracketObj) ? bracketObj : (bracketObj.matches ? (Array.isArray(bracketObj.matches) ? bracketObj.matches : Object.values(bracketObj.matches)) : []);
+        
+        if (matchesList[matchIdx]) {
+          if (!matchesList[matchIdx][roundsField]) {
+            matchesList[matchIdx][roundsField] = [0, 0, 0];
+          }
+          matchesList[matchIdx][roundsField][roundIdx] = Number(val) || 0;
+
+          if (Array.isArray(bracketObj)) {
+            bracketsData[bracketId] = matchesList;
+          } else {
+            bracketsData[bracketId].matches = matchesList;
+          }
+          set(bracketsRef, bracketsData).catch(err => alert("Score update failed: " + err.message));
+        }
+      };
+
+      window.updateMatchPenalty = function(bracketId, matchIdx, field, val) {
+        const bracketObj = bracketsData[bracketId];
+        if (!bracketObj) return;
+
+        let matchesList = Array.isArray(bracketObj) ? bracketObj : (bracketObj.matches ? (Array.isArray(bracketObj.matches) ? bracketObj.matches : Object.values(bracketObj.matches)) : []);
+        
+        if (matchesList[matchIdx]) {
+          matchesList[matchIdx][field] = Number(val) || 0;
+          if (Array.isArray(bracketObj)) {
+            bracketsData[bracketId] = matchesList;
+          } else {
+            bracketsData[bracketId].matches = matchesList;
+          }
+          set(bracketsRef, bracketsData).catch(err => alert("Save failed: " + err.message));
+        }
+      };
+
+    } catch (e) {
+      console.error("Firebase initialization error:", e);
+      statusEl.textContent = "Error";
     }
-
-    window.renderRoomsList = function(rooms) {
-      const container = document.getElementById("rooms-container");
-      if (!rooms.length) {
-        container.innerHTML = `<div class="text-center py-8 text-slate-500 text-xs bg-[#111827] rounded-2xl border border-slate-800">No rooms match your filter.</div>`;
-        return;
-      }
-
-      container.innerHTML = "";
-
-      rooms.forEach(room => {
-        const liveBadgeHtml = room.isLiveNow ? 
-          `<span class="flex items-center gap-1.5 text-[10px] text-emerald-400 font-bold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>LIVE NOW</span>` : 
-          ``;
-
-        container.innerHTML += `
-          <div class="bg-[#111827] border border-slate-800 hover:border-slate-700 rounded-2xl p-4 transition space-y-4 shadow-xl">
-            <div class="flex justify-between items-start gap-3">
-              <div>
-                <h3 class="text-sm font-black text-white uppercase tracking-wide">${room.name}</h3>
-              </div>
-              <div>${liveBadgeHtml}</div>
-            </div>
-
-            <!-- Date & 2x Bigger Timer Section -->
-            <div class="flex flex-col sm:flex-row items-center justify-between bg-[#0b0f19] border border-slate-800/80 rounded-xl p-3.5 gap-3">
-              <div class="flex items-center gap-2 text-xs text-slate-300 font-bold shrink-0">
-                <span>📅</span>
-                <span>${room.displayDate}</span>
-              </div>
-
-              <!-- 2x Bigger Timer / Status Banner -->
-              <div class="flex items-center gap-1.5 justify-center shrink-0" id="countdown-${room.id}" data-date="${room.rawDate}">
-                <!-- Rendered dynamically by updateCountdowns -->
-              </div>
-            </div>
-
-            <!-- Teams Count (Password Protected text removed) -->
-            <div class="flex items-center justify-between text-xs text-slate-400 border-t border-slate-800/80 pt-3 px-1">
-              <div class="flex items-center gap-2">
-                <span>🛡️</span>
-                <span>${room.teamCount} Team${room.teamCount === 1 ? '' : 's'}</span>
-              </div>
-            </div>
-
-            <div>
-              <button onclick="handleRoomAccess('${room.id}', '${room.adminPassword}')" class="w-full bg-[#0b0f19] hover:bg-slate-900 border border-slate-800 text-yellow-400 hover:text-yellow-300 text-center font-black text-xs py-3 rounded-xl transition cursor-pointer shadow-inner flex items-center justify-center gap-2">
-                Enter Room ➔
-              </button>
-            </div>
-          </div>
-        `;
-      });
-
-      updateCountdowns();
-    };
-
-    function updateCountdowns() {
-      const now = new Date();
-      const currentDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-
-      document.querySelectorAll('[id^="countdown-"]').forEach(el => {
-        const rawDate = el.getAttribute('data-date');
-        const [y, m, d] = rawDate.split('-').map(Number);
-        const targetDateOnly = new Date(y, m - 1, d).getTime();
-
-        // 1. If date is in the past
-        if (targetDateOnly < currentDateOnly) {
-          el.innerHTML = `
-            <div class="bg-slate-800/60 border border-slate-700 text-slate-400 text-sm font-black uppercase px-5 py-2 rounded-lg tracking-wider">
-              Finished
-            </div>
-          `;
-          return;
-        }
-
-        // 2. If date is today
-        if (targetDateOnly === currentDateOnly) {
-          el.innerHTML = `
-            <div class="bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 text-sm font-black uppercase px-5 py-2 rounded-lg tracking-wider animate-pulse">
-              Happening Today
-            </div>
-          `;
-          return;
-        }
-
-        // 3. Future date countdown with seconds (2x bigger sizing applied via text-lg, padding/gap scale up)
-        const targetDateTime = new Date(y, m - 1, d, 0, 0, 0).getTime();
-        const diff = targetDateTime - now.getTime();
-
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-        const pad = (n) => String(n).padStart(2, '0');
-
-        const createFlipUnit = (value, label) => `
-          <div class="flex flex-col items-center">
-            <div class="bg-[#141d2f] border border-slate-700/80 rounded-lg px-3 py-1.5 text-lg font-mono font-black text-yellow-400 shadow-md">
-              ${pad(value)}
-            </div>
-            <span class="text-[10px] text-slate-400 uppercase mt-1 font-bold">${label}</span>
-          </div>
-        `;
-
-        let html = '';
-        if (days > 0) {
-          html += createFlipUnit(days, 'Days');
-          html += `<span class="text-slate-600 font-black text-lg pb-5">:</span>`;
-        }
-        html += createFlipUnit(hours, 'Hrs');
-        html += `<span class="text-slate-600 font-black text-lg pb-5">:</span>`;
-        html += createFlipUnit(minutes, 'Min');
-        html += `<span class="text-slate-600 font-black text-lg pb-5">:</span>`;
-        html += createFlipUnit(seconds, 'Sec');
-
-        el.innerHTML = html;
-      });
-    }
-
-    window.filterRooms = function() {
-      const query = document.getElementById("search-input").value.toLowerCase();
-      const status = document.getElementById("status-filter").value;
-
-      const filtered = allRoomsCache.filter(room => {
-        const matchesQuery = room.name.toLowerCase().includes(query);
-        const matchesStatus = status === 'all' || (status === 'live' && room.isLiveNow);
-        return matchesQuery && matchesStatus;
-      });
-
-      renderRoomsList(filtered);
-    };
-
-    window.openCreateModal = function() {
-      const today = new Date().toISOString().split('T')[0];
-      const dateInput = document.getElementById("new-room-date");
-      if (dateInput && !dateInput.value) {
-        dateInput.value = today;
-      }
-      document.getElementById("create-modal").classList.remove("hidden");
-    };
-
-    window.closeCreateModal = function() {
-      document.getElementById("create-modal").classList.add("hidden");
-    };
-
-    window.createNewRoom = async function() {
-      const nameInput = document.getElementById("new-room-name").value.trim();
-      const dateInput = document.getElementById("new-room-date").value;
-      const passInput = document.getElementById("new-room-pass").value;
-      const passConfirmInput = document.getElementById("new-room-pass-confirm").value;
-
-      if (!nameInput) {
-        alert("Please enter a room name.");
-        return;
-      }
-
-      if (!dateInput) {
-        alert("Please select a tournament date.");
-        return;
-      }
-
-      if (!passInput) {
-        alert("Please enter an admin password.");
-        return;
-      }
-
-      if (passInput !== passConfirmInput) {
-        alert("Passwords do not match. Please check and try again.");
-        return;
-      }
-
-      const roomId = nameInput.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
-
-      try {
-        const roomRef = ref(db, `rooms/${roomId}/room_settings`);
-        const snapshot = await get(roomRef);
-
-        if (!snapshot.exists()) {
-          await set(roomRef, {
-            roomName: nameInput,
-            roomDate: dateInput,
-            adminPassword: passInput,
-            roundsPerGame: 3,
-            streamUrl: ""
-          });
-        }
-
-        localStorage.setItem(`admin_${roomId}`, 'true');
-        window.location.href = `admin.html?room=${roomId}`;
-      } catch (err) {
-        console.error(err);
-        alert("Failed to create room.");
-      }
-    };
-
-    window.handleRoomAccess = function(rId, defaultPass) {
-      window.location.href = `room.html?room=${rId}`;
-    };
-
-    loadRoomsPortal();
   </script>
 </body>
 </html>
