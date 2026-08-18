@@ -62,7 +62,7 @@
         </div>
         <div>
           <label class="block text-[10px] text-slate-400 mb-1 uppercase font-bold">Tournament Date</label>
-          <input type="date" id="tournament-date-input" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400 cursor-pointer">
+          <input type="date" id="tournament-date-input" onchange="saveRoomSettings()" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400 cursor-pointer">
         </div>
       </div>
       <div class="flex justify-between items-center pt-3 border-t border-slate-800/80">
@@ -194,10 +194,13 @@
           update(roomSettingsRef, { adminPassword: "admin" }).catch(err => console.error("Default password init error:", err));
         }
 
+        // Support both roomDate and tournamentDate keys to prevent missing synchronization
         const storedDate = settings.roomDate || settings.tournamentDate;
         if (storedDate !== undefined) {
           const dateInput = document.getElementById("tournament-date-input");
-          if (dateInput) dateInput.value = storedDate;
+          if (dateInput && document.activeElement !== dateInput) {
+            dateInput.value = storedDate;
+          }
         }
       }, (err) => console.error("Room settings error:", err));
 
@@ -375,7 +378,7 @@
                         <button onclick="deleteMatchFromBracket('${bracketId}', ${mIdx})" class="text-red-400 hover:text-red-300 text-xs font-bold cursor-pointer">🗑️ Delete Match</button>
                       </div>
 
-                      <!-- Scoreboard Layout Matrix (Matching Image Design) -->
+                      <!-- Scoreboard Layout Matrix -->
                       <div class="overflow-x-auto">
                         <div class="min-w-[500px] space-y-2">
                           <!-- Column Header Row -->
@@ -429,9 +432,18 @@
       };
 
       window.saveRoomSettings = function() {
-        const date = document.getElementById("tournament-date-input").value;
-        update(roomSettingsRef, { roomDate: date })
-          .then(() => alert("Room settings updated successfully!"))
+        const dateInput = document.getElementById("tournament-date-input");
+        if (!dateInput) return;
+        const date = dateInput.value;
+        
+        // Update both properties simultaneously to ensure compatibility with room.html viewing scripts
+        update(roomSettingsRef, { 
+          roomDate: date,
+          tournamentDate: date 
+        })
+          .then(() => {
+            console.log("Tournament date updated to:", date);
+          })
           .catch(err => alert("Failed to save settings: " + err.message));
       };
 
@@ -482,9 +494,12 @@
       };
 
       window.manualSave = function() {
-        set(bracketsRef, bracketsData).then(() => {
-          set(teamsRef, window.teamsList).then(() => {
-            alert("Brackets & teams successfully saved!");
+        const date = document.getElementById("tournament-date-input").value;
+        set(roomSettingsRef, { roomDate: date, tournamentDate: date }).then(() => {
+          set(bracketsRef, bracketsData).then(() => {
+            set(teamsRef, window.teamsList).then(() => {
+              alert("Settings, brackets & teams successfully saved!");
+            });
           });
         }).catch(err => alert("Save failed: " + err.message));
       };
