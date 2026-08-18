@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LA Press Speedsoft - Tournament Hub & Scores</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Force date picker icon to be visible and white/yellow on dark background */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(1) brightness(1.5);
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body class="bg-[#0b0f19] text-white p-4 max-w-2xl mx-auto min-h-screen pb-16 relative font-sans">
 
@@ -56,8 +63,16 @@
           <input type="text" id="new-room-name" placeholder="e.g. LA Press Winter Cup" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-400" />
         </div>
         <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tournament Date</label>
+          <input type="date" id="new-room-date" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-400 cursor-pointer" />
+        </div>
+        <div>
           <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Admin Password</label>
-          <input type="text" id="new-room-pass" placeholder="Password to edit matches" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-400" />
+          <input type="password" id="new-room-pass" placeholder="Password to edit matches" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-400" />
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Confirm Password</label>
+          <input type="password" id="new-room-pass-confirm" placeholder="Re-enter password" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-400" />
         </div>
       </div>
 
@@ -89,6 +104,7 @@
     const db = getDatabase(app);
 
     let allRoomsCache = [];
+    let countdownInterval = null;
 
     async function loadRoomsPortal() {
       const container = document.getElementById("rooms-container");
@@ -115,6 +131,10 @@
           const teamsMap = roomObj.team_profiles || {};
           const teamCount = Object.keys(teamsMap).length;
           const isLiveNow = streamUrl && streamUrl.trim() !== "";
+          const rawDate = settings.roomDate || new Date().toISOString().split('T')[0];
+
+          const [y, m, d] = rawDate.split('-').map(Number);
+          const displayDate = new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
           return {
             id: rId,
@@ -122,11 +142,17 @@
             streamUrl,
             teamCount,
             isLiveNow,
+            rawDate,
+            displayDate,
             adminPassword: settings.adminPassword || "admin"
           };
         });
 
         renderRoomsList(allRoomsCache);
+        
+        if (countdownInterval) clearInterval(countdownInterval);
+        countdownInterval = setInterval(updateCountdowns, 1000);
+
       } catch (err) {
         console.error(err);
         container.innerHTML = `<div class="text-center py-6 text-red-400 text-xs">Error loading rooms from database.</div>`;
@@ -141,7 +167,6 @@
       }
 
       container.innerHTML = "";
-      const currentDateStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
       rooms.forEach(room => {
         const liveBadgeHtml = room.isLiveNow ? 
@@ -157,18 +182,24 @@
               <div>${liveBadgeHtml}</div>
             </div>
 
-            <div class="flex items-center justify-between text-xs text-slate-400 border-y border-slate-800/80 py-3 px-1">
-              <div class="flex items-center gap-2">
+            <!-- Date & 2x Bigger Timer Section -->
+            <div class="flex flex-col sm:flex-row items-center justify-between bg-[#0b0f19] border border-slate-800/80 rounded-xl p-3.5 gap-3">
+              <div class="flex items-center gap-2 text-xs text-slate-300 font-bold shrink-0">
                 <span>📅</span>
-                <span>${currentDateStr}</span>
+                <span>${room.displayDate}</span>
               </div>
+
+              <!-- 2x Bigger Timer / Status Banner -->
+              <div class="flex items-center gap-1.5 justify-center shrink-0" id="countdown-${room.id}" data-date="${room.rawDate}">
+                <!-- Rendered dynamically by updateCountdowns -->
+              </div>
+            </div>
+
+            <!-- Teams Count (Password Protected text removed) -->
+            <div class="flex items-center justify-between text-xs text-slate-400 border-t border-slate-800/80 pt-3 px-1">
               <div class="flex items-center gap-2">
                 <span>🛡️</span>
                 <span>${room.teamCount} Team${room.teamCount === 1 ? '' : 's'}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <span>🔒</span>
-                <span>Password</span>
               </div>
             </div>
 
@@ -180,7 +211,73 @@
           </div>
         `;
       });
+
+      updateCountdowns();
     };
+
+    function updateCountdowns() {
+      const now = new Date();
+      const currentDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+      document.querySelectorAll('[id^="countdown-"]').forEach(el => {
+        const rawDate = el.getAttribute('data-date');
+        const [y, m, d] = rawDate.split('-').map(Number);
+        const targetDateOnly = new Date(y, m - 1, d).getTime();
+
+        // 1. If date is in the past
+        if (targetDateOnly < currentDateOnly) {
+          el.innerHTML = `
+            <div class="bg-slate-800/60 border border-slate-700 text-slate-400 text-sm font-black uppercase px-5 py-2 rounded-lg tracking-wider">
+              Finished
+            </div>
+          `;
+          return;
+        }
+
+        // 2. If date is today
+        if (targetDateOnly === currentDateOnly) {
+          el.innerHTML = `
+            <div class="bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 text-sm font-black uppercase px-5 py-2 rounded-lg tracking-wider animate-pulse">
+              Happening Today
+            </div>
+          `;
+          return;
+        }
+
+        // 3. Future date countdown with seconds (2x bigger sizing applied via text-lg, padding/gap scale up)
+        const targetDateTime = new Date(y, m - 1, d, 0, 0, 0).getTime();
+        const diff = targetDateTime - now.getTime();
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        const pad = (n) => String(n).padStart(2, '0');
+
+        const createFlipUnit = (value, label) => `
+          <div class="flex flex-col items-center">
+            <div class="bg-[#141d2f] border border-slate-700/80 rounded-lg px-3 py-1.5 text-lg font-mono font-black text-yellow-400 shadow-md">
+              ${pad(value)}
+            </div>
+            <span class="text-[10px] text-slate-400 uppercase mt-1 font-bold">${label}</span>
+          </div>
+        `;
+
+        let html = '';
+        if (days > 0) {
+          html += createFlipUnit(days, 'Days');
+          html += `<span class="text-slate-600 font-black text-lg pb-5">:</span>`;
+        }
+        html += createFlipUnit(hours, 'Hrs');
+        html += `<span class="text-slate-600 font-black text-lg pb-5">:</span>`;
+        html += createFlipUnit(minutes, 'Min');
+        html += `<span class="text-slate-600 font-black text-lg pb-5">:</span>`;
+        html += createFlipUnit(seconds, 'Sec');
+
+        el.innerHTML = html;
+      });
+    }
 
     window.filterRooms = function() {
       const query = document.getElementById("search-input").value.toLowerCase();
@@ -196,6 +293,11 @@
     };
 
     window.openCreateModal = function() {
+      const today = new Date().toISOString().split('T')[0];
+      const dateInput = document.getElementById("new-room-date");
+      if (dateInput && !dateInput.value) {
+        dateInput.value = today;
+      }
       document.getElementById("create-modal").classList.remove("hidden");
     };
 
@@ -205,10 +307,27 @@
 
     window.createNewRoom = async function() {
       const nameInput = document.getElementById("new-room-name").value.trim();
-      const passInput = document.getElementById("new-room-pass").value.trim() || "admin";
+      const dateInput = document.getElementById("new-room-date").value;
+      const passInput = document.getElementById("new-room-pass").value;
+      const passConfirmInput = document.getElementById("new-room-pass-confirm").value;
 
       if (!nameInput) {
         alert("Please enter a room name.");
+        return;
+      }
+
+      if (!dateInput) {
+        alert("Please select a tournament date.");
+        return;
+      }
+
+      if (!passInput) {
+        alert("Please enter an admin password.");
+        return;
+      }
+
+      if (passInput !== passConfirmInput) {
+        alert("Passwords do not match. Please check and try again.");
         return;
       }
 
@@ -221,6 +340,7 @@
         if (!snapshot.exists()) {
           await set(roomRef, {
             roomName: nameInput,
+            roomDate: dateInput,
             adminPassword: passInput,
             roundsPerGame: 3,
             streamUrl: ""
@@ -236,7 +356,6 @@
     };
 
     window.handleRoomAccess = function(rId, defaultPass) {
-      // Directs to viewer room.html by default. Users can access admin via gear icon inside room.html
       window.location.href = `room.html?room=${rId}`;
     };
 
