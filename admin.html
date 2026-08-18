@@ -1,94 +1,77 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LA Press Speedsoft - Tournament Hub & Scores</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tournament Admin Panel</title>
+  <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    /* Force date picker icon to be visible and white/yellow on dark background */
-    input[type="date"]::-webkit-calendar-picker-indicator {
-      filter: invert(1) brightness(1.5);
-      cursor: pointer;
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            dark: {
+              900: '#0f172a',
+              950: '#020617'
+            }
+          }
+        }
+      }
     }
-  </style>
+  </script>
 </head>
-<body class="bg-[#0b0f19] text-white p-4 max-w-2xl mx-auto min-h-screen pb-16 relative font-sans">
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased">
 
-  <!-- Header -->
-  <header class="mb-6 flex justify-between items-center">
-    <div>
-      <h1 class="text-xl font-black tracking-wide uppercase text-yellow-400">LA PRESS SPEEDSOFT</h1>
-      <p class="text-xs text-slate-400 mt-0.5">Live Tournament Hub & Scores</p>
-    </div>
-    <button onclick="openCreateModal()" class="bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl transition shadow-lg shadow-yellow-400/10 cursor-pointer">
-      + Create Room
-    </button>
-  </header>
-
-  <!-- SEARCH & FILTER BAR -->
-  <div class="flex gap-2 mb-6">
-    <div class="relative flex-1">
-      <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-500">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-      </span>
-      <input type="text" id="search-input" oninput="filterRooms()" placeholder="Search room or host..." class="w-full bg-[#111827] border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-slate-700 transition" />
-    </div>
-    <select id="status-filter" onchange="filterRooms()" class="bg-[#111827] border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-slate-700 transition cursor-pointer">
-      <option value="all">All Status</option>
-      <option value="live">Live Now</option>
-    </select>
-  </div>
-
-  <!-- ROOMS LIST CONTAINER -->
-  <section id="rooms-container" class="space-y-4">
-    <div class="text-center py-10 text-slate-500 text-xs bg-[#111827]/50 rounded-2xl border border-slate-800/80">
-      Loading tournament rooms...
-    </div>
-  </section>
-
-  <!-- CREATE ROOM MODAL -->
-  <div id="create-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-[#111827] border border-slate-800 rounded-2xl w-full max-w-md p-5 shadow-2xl relative space-y-4">
-      <button onclick="closeCreateModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer">✕</button>
-      
-      <div class="border-b border-slate-800 pb-3 pr-8">
-        <h3 class="text-sm font-black text-yellow-400 uppercase tracking-wide">Create Tournament Room</h3>
-        <p class="text-[10px] text-slate-400">Set up a new live scoreboard room</p>
+  <div class="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
+    
+    <!-- HEADER -->
+    <header class="flex justify-between items-center border-b border-slate-800 pb-4">
+      <div>
+        <h1 class="text-lg font-black text-yellow-400 tracking-wider uppercase">⚡ Tournament Admin Panel</h1>
+        <p class="text-xs text-slate-400">Manage brackets, match scores, penalties, and teams in real time.</p>
       </div>
-
-      <div class="space-y-3">
-        <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Room Name</label>
-          <input type="text" id="new-room-name" placeholder="e.g. LA Press Winter Cup" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-400" />
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tournament Date</label>
-          <input type="date" id="new-room-date" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-400 cursor-pointer" />
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Admin Password</label>
-          <input type="password" id="new-room-pass" placeholder="Password to edit matches" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-400" />
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Confirm Password</label>
-          <input type="password" id="new-room-pass-confirm" placeholder="Re-enter password" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-400" />
-        </div>
+      <div id="connection-status" class="text-[10px] bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-full text-slate-400">
+        Connecting...
       </div>
+    </header>
 
-      <div class="pt-2">
-        <button onclick="createNewRoom()" class="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black text-xs py-2.5 rounded-xl transition shadow-lg shadow-yellow-400/10 cursor-pointer">
-          Create Room & Enter Dashboard 🚀
+    <!-- TEAMS CONFIGURATION SECTION -->
+    <section class="bg-slate-900 rounded-xl p-4 border border-slate-800 shadow-lg">
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-xs font-bold text-slate-100 uppercase tracking-wide">🛡️ Participating Teams</h2>
+        <button onclick="addNewTeam()" class="bg-slate-800 hover:bg-slate-700 text-slate-100 text-[10px] font-bold px-2.5 py-1.5 rounded transition">
+          + Add Team
         </button>
       </div>
-    </div>
+      <div id="admin-teams-container" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div class="text-center py-3 text-slate-500 text-xs col-span-full">Loading teams...</div>
+      </div>
+    </section>
+
+    <!-- MATCH SCORES & BRACKETS SECTION -->
+    <section class="bg-slate-900 rounded-xl p-4 border border-slate-800 shadow-lg">
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-xs font-bold text-slate-100 uppercase tracking-wide">⚔️ Brackets & Match Scores</h2>
+        <button onclick="addNewBracket()" class="bg-yellow-400 hover:bg-yellow-300 text-slate-900 text-[10px] font-bold px-2.5 py-1.5 rounded transition">
+          + New Bracket
+        </button>
+      </div>
+      <div id="admin-brackets-container" class="space-y-6">
+        <div class="text-center py-4 text-slate-500 text-xs">Loading brackets...</div>
+      </div>
+    </section>
+
   </div>
 
-  <!-- FIREBASE & PORTAL LOGIC -->
+  <!-- Firebase SDKs & Script Logic -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
+    // Your Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyCnDxO6WzA9n4XyF_-0QhT3SksKaUV9C7Q",
       authDomain: "lapress-88be8.firebaseapp.com",
@@ -100,266 +83,234 @@
       measurementId: "G-S5G8F8ZHXH"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    const statusEl = document.getElementById("connection-status");
 
-    let allRoomsCache = [];
-    let countdownInterval = null;
-
-    async function loadRoomsPortal() {
-      const container = document.getElementById("rooms-container");
+    try {
+      // Initialize Firebase & Analytics
+      const app = initializeApp(firebaseConfig);
+      const analytics = getAnalytics(app);
+      const db = getDatabase(app);
       
-      try {
-        const roomsRef = ref(db, 'rooms');
-        const snapshot = await get(roomsRef);
-        
-        if (!snapshot.exists()) {
-          container.innerHTML = `
-            <div class="text-center py-10 bg-[#111827] rounded-2xl border border-slate-800 p-6 space-y-3">
-              <p class="text-xs text-slate-400">No active tournament rooms found.</p>
-              <button onclick="openCreateModal()" class="px-4 py-2 bg-yellow-400 text-slate-950 font-black text-xs rounded-xl cursor-pointer">Create First Room</button>
-            </div>`;
+      const dbBasePath = "tournament/main";
+
+      window.db = db;
+      window.dbBasePath = dbBasePath;
+      window.teamsList = [];
+      let bracketsData = {};
+      let totalRounds = 3;
+
+      const teamsRef = ref(db, `${dbBasePath}/teams`);
+      const bracketsRef = ref(db, `${dbBasePath}/brackets`);
+
+      // Monitor connection state
+      const connectedRef = ref(db, ".info/connected");
+      onValue(connectedRef, (snap) => {
+        if (snap.val() === true) {
+          statusEl.textContent = "Connected";
+          statusEl.className = "text-[10px] bg-emerald-950/50 border border-emerald-900 px-2.5 py-1 rounded-full text-emerald-400";
+        } else {
+          statusEl.textContent = "Connecting...";
+          statusEl.className = "text-[10px] bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-full text-slate-400";
+        }
+      });
+
+      // Teams Listener
+      onValue(teamsRef, (snapshot) => {
+        window.teamsList = snapshot.val() || ["Team Alpha", "Team Bravo"];
+        renderAdminTeams();
+        renderAdminBrackets();
+      }, (error) => {
+        console.error("Teams read error:", error);
+      });
+
+      // Brackets Listener
+      onValue(bracketsRef, (snapshot) => {
+        bracketsData = snapshot.val() || {};
+        renderAdminBrackets();
+      }, (error) => {
+        console.error("Brackets read error:", error);
+      });
+
+      // --- TEAM ACTIONS ---
+      window.addNewTeam = function() {
+        window.teamsList.push(`Team ${window.teamsList.length + 1}`);
+        set(teamsRef, window.teamsList);
+      };
+
+      window.updateTeamName = function(idx, value) {
+        window.teamsList[idx] = value;
+        set(teamsRef, window.teamsList);
+      };
+
+      window.deleteTeam = function(idx) {
+        if (window.teamsList.length <= 1) {
+          alert("You must keep at least one team.");
           return;
         }
+        window.teamsList.splice(idx, 1);
+        set(teamsRef, window.teamsList);
+      };
 
-        const roomsData = snapshot.val();
-        allRoomsCache = Object.keys(roomsData).map(rId => {
-          const roomObj = roomsData[rId];
-          const settings = roomObj.room_settings || {};
-          const roomName = settings.roomName || rId.replace(/-/g, ' ').toUpperCase();
-          const streamUrl = settings.streamUrl || "";
-          const teamsMap = roomObj.team_profiles || {};
-          const teamCount = Object.keys(teamsMap).length;
-          const isLiveNow = streamUrl && streamUrl.trim() !== "";
-          const rawDate = settings.roomDate || new Date().toISOString().split('T')[0];
+      // --- BRACKET & MATCH ACTIONS ---
+      window.addNewBracket = function() {
+        const bracketId = "Bracket_" + Date.now();
+        bracketsData[bracketId] = [];
+        set(bracketsRef, bracketsData);
+      };
 
-          const [y, m, d] = rawDate.split('-').map(Number);
-          const displayDate = new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      window.deleteBracket = function(bracketId) {
+        if (confirm(`Are you sure you want to delete ${bracketId.replace('_', ' ')}?`)) {
+          delete bracketsData[bracketId];
+          set(bracketsRef, bracketsData);
+        }
+      };
 
-          return {
-            id: rId,
-            name: roomName,
-            streamUrl,
-            teamCount,
-            isLiveNow,
-            rawDate,
-            displayDate,
-            adminPassword: settings.adminPassword || "admin"
-          };
+      window.addNewMatchToBracket = function(bracketId) {
+        if (!bracketsData[bracketId]) bracketsData[bracketId] = [];
+        bracketsData[bracketId].push({
+          id: Date.now(),
+          teamAIdx: 0,
+          teamBIdx: window.teamsList.length > 1 ? 1 : 0,
+          teamARounds: new Array(totalRounds).fill(0),
+          teamBRounds: new Array(totalRounds).fill(0),
+          teamAPenalty: 0,
+          teamBPenalty: 0
         });
+        set(bracketsRef, bracketsData);
+      };
 
-        renderRoomsList(allRoomsCache);
-        
-        if (countdownInterval) clearInterval(countdownInterval);
-        countdownInterval = setInterval(updateCountdowns, 1000);
+      window.deleteMatchFromBracket = function(bracketId, matchIdx) {
+        bracketsData[bracketId].splice(matchIdx, 1);
+        set(bracketsRef, bracketsData);
+      };
 
-      } catch (err) {
-        console.error(err);
-        container.innerHTML = `<div class="text-center py-6 text-red-400 text-xs">Error loading rooms from database.</div>`;
-      }
-    }
+      window.updateMatchRound = function(bracketId, matchIdx, teamKey, roundIdx, value) {
+        const val = parseInt(value) || 0;
+        if (teamKey === 'A') {
+          bracketsData[bracketId][matchIdx].teamARounds[roundIdx] = val;
+        } else {
+          bracketsData[bracketId][matchIdx].teamBRounds[roundIdx] = val;
+        }
+        set(bracketsRef, bracketsData);
+      };
 
-    window.renderRoomsList = function(rooms) {
-      const container = document.getElementById("rooms-container");
-      if (!rooms.length) {
-        container.innerHTML = `<div class="text-center py-8 text-slate-500 text-xs bg-[#111827] rounded-2xl border border-slate-800">No rooms match your filter.</div>`;
-        return;
-      }
+      window.updateMatchPenalty = function(bracketId, matchIdx, teamKey, value) {
+        const val = parseInt(value) || 0;
+        if (teamKey === 'A') {
+          bracketsData[bracketId][matchIdx].teamAPenalty = val;
+        } else {
+          bracketsData[bracketId][matchIdx].teamBPenalty = val;
+        }
+        set(bracketsRef, bracketsData);
+      };
 
-      container.innerHTML = "";
+      window.updateMatchTeam = function(bracketId, matchIdx, teamKey, value) {
+        const val = parseInt(value) || 0;
+        if (teamKey === 'A') {
+          bracketsData[bracketId][matchIdx].teamAIdx = val;
+        } else {
+          bracketsData[bracketId][matchIdx].teamBIdx = val;
+        }
+        set(bracketsRef, bracketsData);
+      };
 
-      rooms.forEach(room => {
-        const liveBadgeHtml = room.isLiveNow ? 
-          `<span class="flex items-center gap-1.5 text-[10px] text-emerald-400 font-bold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>LIVE NOW</span>` : 
-          ``;
-
-        container.innerHTML += `
-          <div class="bg-[#111827] border border-slate-800 hover:border-slate-700 rounded-2xl p-4 transition space-y-4 shadow-xl">
-            <div class="flex justify-between items-start gap-3">
-              <div>
-                <h3 class="text-sm font-black text-white uppercase tracking-wide">${room.name}</h3>
-              </div>
-              <div>${liveBadgeHtml}</div>
-            </div>
-
-            <!-- Date & 2x Bigger Timer Section -->
-            <div class="flex flex-col sm:flex-row items-center justify-between bg-[#0b0f19] border border-slate-800/80 rounded-xl p-3.5 gap-3">
-              <div class="flex items-center gap-2 text-xs text-slate-300 font-bold shrink-0">
-                <span>📅</span>
-                <span>${room.displayDate}</span>
-              </div>
-
-              <!-- 2x Bigger Timer / Status Banner -->
-              <div class="flex items-center gap-1.5 justify-center shrink-0" id="countdown-${room.id}" data-date="${room.rawDate}">
-                <!-- Rendered dynamically by updateCountdowns -->
-              </div>
-            </div>
-
-            <!-- Teams Count (Password Protected text removed) -->
-            <div class="flex items-center justify-between text-xs text-slate-400 border-t border-slate-800/80 pt-3 px-1">
-              <div class="flex items-center gap-2">
-                <span>🛡️</span>
-                <span>${room.teamCount} Team${room.teamCount === 1 ? '' : 's'}</span>
-              </div>
-            </div>
-
-            <div>
-              <button onclick="handleRoomAccess('${room.id}', '${room.adminPassword}')" class="w-full bg-[#0b0f19] hover:bg-slate-900 border border-slate-800 text-yellow-400 hover:text-yellow-300 text-center font-black text-xs py-3 rounded-xl transition cursor-pointer shadow-inner flex items-center justify-center gap-2">
-                Enter Room ➔
-              </button>
-            </div>
+      // --- RENDERING FUNCTIONS ---
+      function renderAdminTeams() {
+        const container = document.getElementById("admin-teams-container");
+        if (!container) return;
+        container.innerHTML = window.teamsList.map((team, idx) => `
+          <div class="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800">
+            <span class="text-[10px] text-slate-500 font-bold w-5 text-center">#${idx + 1}</span>
+            <input type="text" value="${typeof team === 'object' ? team.name : team}" 
+              onchange="updateTeamName(${idx}, this.value)" 
+              class="bg-slate-900 border border-slate-700 text-xs rounded px-2 py-1 text-white flex-1 focus:outline-none focus:border-yellow-400">
+            <button onclick="deleteTeam(${idx})" class="text-red-400 hover:text-red-300 text-[10px] px-1.5 py-1">✕</button>
           </div>
-        `;
-      });
+        `).join('');
+      }
 
-      updateCountdowns();
-    };
+      function renderAdminBrackets() {
+        const container = document.getElementById("admin-brackets-container");
+        if (!container) return;
 
-    function updateCountdowns() {
-      const now = new Date();
-      const currentDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-
-      document.querySelectorAll('[id^="countdown-"]').forEach(el => {
-        const rawDate = el.getAttribute('data-date');
-        const [y, m, d] = rawDate.split('-').map(Number);
-        const targetDateOnly = new Date(y, m - 1, d).getTime();
-
-        // 1. If date is in the past
-        if (targetDateOnly < currentDateOnly) {
-          el.innerHTML = `
-            <div class="bg-slate-800/60 border border-slate-700 text-slate-400 text-sm font-black uppercase px-5 py-2 rounded-lg tracking-wider">
-              Finished
+        const bracketKeys = Object.keys(bracketsData);
+        if (bracketKeys.length === 0) {
+          container.innerHTML = `
+            <div class="text-center py-6 text-slate-500 text-xs bg-slate-950 rounded-lg border border-dashed border-slate-800">
+              No brackets created yet. Click "+ New Bracket" above to start.
             </div>
           `;
           return;
         }
 
-        // 2. If date is today
-        if (targetDateOnly === currentDateOnly) {
-          el.innerHTML = `
-            <div class="bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 text-sm font-black uppercase px-5 py-2 rounded-lg tracking-wider animate-pulse">
-              Happening Today
+        container.innerHTML = "";
+        bracketKeys.forEach((bId) => {
+          const matches = bracketsData[bId] || [];
+          let matchesHtml = "";
+          
+          if (matches.length === 0) {
+            matchesHtml = `<div class="text-center py-3 text-slate-500 text-xs">No matches in this bracket yet.</div>`;
+          } else {
+            matchesHtml = matches.map((m, mIdx) => {
+              let roundInputsA = "";
+              let roundInputsB = "";
+              for (let r = 0; r < totalRounds; r++) {
+                const scoreA = m.teamARounds?.[r] || 0;
+                const scoreB = m.teamBRounds?.[r] || 0;
+                roundInputsA += `<input type="number" value="${scoreA}" onchange="updateMatchRound('${bId}', ${mIdx}, 'A', ${r}, this.value)" class="w-10 bg-slate-900 border border-slate-700 text-center text-xs rounded py-1 text-white">`;
+                roundInputsB += `<input type="number" value="${scoreB}" onchange="updateMatchRound('${bId}', ${mIdx}, 'B', ${r}, this.value)" class="w-10 bg-slate-900 border border-slate-700 text-center text-xs rounded py-1 text-white">`;
+              }
+
+              const optionsA = window.teamsList.map((t, idx) => `<option value="${idx}" ${m.teamAIdx === idx ? 'selected' : ''}>${t.name || t}</option>`).join('');
+              const optionsB = window.teamsList.map((t, idx) => `<option value="${idx}" ${m.teamBIdx === idx ? 'selected' : ''}>${t.name || t}</option>`).join('');
+
+              return `
+                <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 space-y-2">
+                  <div class="flex justify-between items-center text-[11px] text-slate-400 border-b border-slate-800 pb-1.5">
+                    <span class="font-bold text-slate-300">Match #${mIdx + 1}</span>
+                    <button onclick="deleteMatchFromBracket('${bId}', ${mIdx})" class="text-red-400 hover:text-red-300 text-[10px]">Remove Match</button>
+                  </div>
+                  <div class="flex items-center gap-2 justify-between flex-wrap sm:flex-nowrap">
+                    <select onchange="updateMatchTeam('${bId}', ${mIdx}, 'A', this.value)" class="bg-slate-950 border border-slate-700 text-xs rounded px-2 py-1 text-white flex-1 min-w-[120px]">${optionsA}</select>
+                    <div class="flex gap-1">${roundInputsA}</div>
+                    <div class="flex items-center gap-1">
+                      <span class="text-[10px] text-red-400 font-medium">Pen:</span>
+                      <input type="number" value="${m.teamAPenalty || 0}" onchange="updateMatchPenalty('${bId}', ${mIdx}, 'A', this.value)" class="w-10 bg-slate-900 border border-slate-700 text-center text-xs rounded py-1 text-white">
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2 justify-between flex-wrap sm:flex-nowrap">
+                    <select onchange="updateMatchTeam('${bId}', ${mIdx}, 'B', this.value)" class="bg-slate-950 border border-slate-700 text-xs rounded px-2 py-1 text-white flex-1 min-w-[120px]">${optionsB}</select>
+                    <div class="flex gap-1">${roundInputsB}</div>
+                    <div class="flex items-center gap-1">
+                      <span class="text-[10px] text-red-400 font-medium">Pen:</span>
+                      <input type="number" value="${m.teamBPenalty || 0}" onchange="updateMatchPenalty('${bId}', ${mIdx}, 'B', this.value)" class="w-10 bg-slate-900 border border-slate-700 text-center text-xs rounded py-1 text-white">
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('');
+          }
+
+          container.innerHTML += `
+            <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 shadow-inner">
+              <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-2">
+                <span class="text-xs font-bold text-yellow-400 uppercase tracking-wider">${bId.replace('_', ' ')}</span>
+                <div class="flex gap-2">
+                  <button onclick="addNewMatchToBracket('${bId}')" class="text-[10px] bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded text-white transition">+ Add Match</button>
+                  <button onclick="deleteBracket('${bId}')" class="text-[10px] bg-red-950 hover:bg-red-900/50 border border-red-900/50 px-2 py-1 rounded text-red-400 transition">Delete Bracket</button>
+                </div>
+              </div>
+              <div class="space-y-3">${matchesHtml}</div>
             </div>
           `;
-          return;
-        }
+        });
+      }
 
-        // 3. Future date countdown with seconds (2x bigger sizing applied via text-lg, padding/gap scale up)
-        const targetDateTime = new Date(y, m - 1, d, 0, 0, 0).getTime();
-        const diff = targetDateTime - now.getTime();
-
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-        const pad = (n) => String(n).padStart(2, '0');
-
-        const createFlipUnit = (value, label) => `
-          <div class="flex flex-col items-center">
-            <div class="bg-[#141d2f] border border-slate-700/80 rounded-lg px-3 py-1.5 text-lg font-mono font-black text-yellow-400 shadow-md">
-              ${pad(value)}
-            </div>
-            <span class="text-[10px] text-slate-400 uppercase mt-1 font-bold">${label}</span>
-          </div>
-        `;
-
-        let html = '';
-        if (days > 0) {
-          html += createFlipUnit(days, 'Days');
-          html += `<span class="text-slate-600 font-black text-lg pb-5">:</span>`;
-        }
-        html += createFlipUnit(hours, 'Hrs');
-        html += `<span class="text-slate-600 font-black text-lg pb-5">:</span>`;
-        html += createFlipUnit(minutes, 'Min');
-        html += `<span class="text-slate-600 font-black text-lg pb-5">:</span>`;
-        html += createFlipUnit(seconds, 'Sec');
-
-        el.innerHTML = html;
-      });
+    } catch (err) {
+      console.error("Firebase Initialization Error:", err);
+      statusEl.textContent = "Init Error";
+      statusEl.className = "text-[10px] bg-red-950/50 border border-red-900 px-2.5 py-1 rounded-full text-red-400";
     }
-
-    window.filterRooms = function() {
-      const query = document.getElementById("search-input").value.toLowerCase();
-      const status = document.getElementById("status-filter").value;
-
-      const filtered = allRoomsCache.filter(room => {
-        const matchesQuery = room.name.toLowerCase().includes(query);
-        const matchesStatus = status === 'all' || (status === 'live' && room.isLiveNow);
-        return matchesQuery && matchesStatus;
-      });
-
-      renderRoomsList(filtered);
-    };
-
-    window.openCreateModal = function() {
-      const today = new Date().toISOString().split('T')[0];
-      const dateInput = document.getElementById("new-room-date");
-      if (dateInput && !dateInput.value) {
-        dateInput.value = today;
-      }
-      document.getElementById("create-modal").classList.remove("hidden");
-    };
-
-    window.closeCreateModal = function() {
-      document.getElementById("create-modal").classList.add("hidden");
-    };
-
-    window.createNewRoom = async function() {
-      const nameInput = document.getElementById("new-room-name").value.trim();
-      const dateInput = document.getElementById("new-room-date").value;
-      const passInput = document.getElementById("new-room-pass").value;
-      const passConfirmInput = document.getElementById("new-room-pass-confirm").value;
-
-      if (!nameInput) {
-        alert("Please enter a room name.");
-        return;
-      }
-
-      if (!dateInput) {
-        alert("Please select a tournament date.");
-        return;
-      }
-
-      if (!passInput) {
-        alert("Please enter an admin password.");
-        return;
-      }
-
-      if (passInput !== passConfirmInput) {
-        alert("Passwords do not match. Please check and try again.");
-        return;
-      }
-
-      const roomId = nameInput.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
-
-      try {
-        const roomRef = ref(db, `rooms/${roomId}/room_settings`);
-        const snapshot = await get(roomRef);
-
-        if (!snapshot.exists()) {
-          await set(roomRef, {
-            roomName: nameInput,
-            roomDate: dateInput,
-            adminPassword: passInput,
-            roundsPerGame: 3,
-            streamUrl: ""
-          });
-        }
-
-        localStorage.setItem(`admin_${roomId}`, 'true');
-        window.location.href = `admin.html?room=${roomId}`;
-      } catch (err) {
-        console.error(err);
-        alert("Failed to create room.");
-      }
-    };
-
-    window.handleRoomAccess = function(rId, defaultPass) {
-      window.location.href = `room.html?room=${rId}`;
-    };
-
-    loadRoomsPortal();
   </script>
 </body>
 </html>
