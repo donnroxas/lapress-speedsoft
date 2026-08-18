@@ -159,7 +159,6 @@
     let matchSchedule = [];
     let roomAdminPassword = "admin";
 
-    // Fetch Room Settings, Admin Password & Room Name from Firebase
     onValue(roomRef, (snapshot) => {
       const settings = snapshot.val();
       if (settings) {
@@ -184,7 +183,6 @@
       }
     });
 
-    // Password Prompt Handler for Admin Access
     window.promptAdminAccess = function() {
       const enteredPassword = prompt("Enter Admin Password:");
       if (enteredPassword === null) return;
@@ -213,7 +211,6 @@
       renderMatches();
     });
 
-    // LIGHTBOX HANDLERS
     window.openLightbox = function(event, imgUrl) {
       if (!imgUrl) return;
       event.stopPropagation();
@@ -225,7 +222,6 @@
       document.getElementById("photo-lightbox-modal").style.display = "none";
     };
 
-    // FIXED STREAM PLAYER (Supports YouTube and Twitch)
     window.playStream = function() {
       if (!globalStreamUrl) {
         alert("No stream URL entered in admin settings!");
@@ -235,7 +231,6 @@
       const iframeWrapper = document.getElementById("iframe-wrapper");
       let embedHtml = "";
 
-      // Check for YouTube URL formats
       if (globalStreamUrl.includes("youtube.com") || globalStreamUrl.includes("youtu.be")) {
         let videoId = "";
         if (globalStreamUrl.includes("youtu.be/")) {
@@ -259,7 +254,6 @@
             </iframe>`;
         }
       } 
-      // Check for Twitch URL formats
       else if (globalStreamUrl.includes("twitch.tv/")) {
         const cleanPath = globalStreamUrl.split("twitch.tv/")[1];
         const channel = cleanPath ? cleanPath.split("/")[0].split("?")[0] : "";
@@ -377,7 +371,6 @@
         const teamA = teamsData[match.teamAIdx] || { name: "Team A", logo: "" };
         const teamB = teamsData[match.teamBIdx] || { name: "Team B", logo: "" };
 
-        // Calculate total points per match for Team A and Team B
         const sumA = (match.teamARounds || []).reduce((a, b) => a + (parseInt(b) || 0), 0);
         const penA = parseInt(match.teamAPenalty) || 0;
         const totalPtsA = sumA - penA;
@@ -386,7 +379,6 @@
         const penB = parseInt(match.teamBPenalty) || 0;
         const totalPtsB = sumB - penB;
 
-        // Build header labels for rounds dynamically based on totalRounds
         let headersHtml = '';
         for (let r = 1; r <= totalRounds; r++) {
           headersHtml += `<span class="text-[9px] font-bold text-slate-400 uppercase text-center w-7">R${r}</span>`;
@@ -408,16 +400,16 @@
                 ${headersHtml}
               </div>
             </div>
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-xs font-bold text-white truncate max-w-[130px]">${teamA.name}</span>
+            <div class="flex items-center justify-between gap-3">
+              <span class="text-xs font-bold text-white flex-grow break-words leading-tight">${teamA.name}</span>
               <div class="flex items-center gap-1 shrink-0">
                 ${roundBoxesA}
                 <span class="w-7 h-7 bg-red-500/10 border border-red-500/30 rounded flex items-center justify-center text-[11px] font-bold text-red-400">${penA}</span>
                 <span class="w-12 text-right text-xs font-black text-yellow-400 pr-1">${totalPtsA}</span>
               </div>
             </div>
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-xs font-bold text-white truncate max-w-[130px]">${teamB.name}</span>
+            <div class="flex items-center justify-between gap-3">
+              <span class="text-xs font-bold text-white flex-grow break-words leading-tight">${teamB.name}</span>
               <div class="flex items-center gap-1 shrink-0">
                 ${roundBoxesB}
                 <span class="w-7 h-7 bg-red-500/10 border border-red-500/30 rounded flex items-center justify-center text-[11px] font-bold text-red-400">${penB}</span>
