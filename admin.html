@@ -52,40 +52,56 @@
 
     <!-- Room Settings & Controls Section -->
     <section class="bg-[#111827] rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3">
-      <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wide">⚙️ Room Settings & Security</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-[10px] text-slate-400 mb-1 uppercase font-bold">Admin Security</label>
-          <button onclick="openChangePasswordModal()" class="w-full bg-[#0b0f19] hover:bg-slate-900 border border-slate-800 text-yellow-400 text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer">
-            🔒 Change Admin Password
-          </button>
+      <button onclick="toggleSection('room-settings-content', this)" class="w-full flex justify-between items-center text-xs font-bold text-slate-200 uppercase tracking-wide cursor-pointer focus:outline-none">
+        <span>⚙️ Room Settings & Security</span>
+        <span class="text-slate-400 text-sm toggle-icon">▼</span>
+      </button>
+      <div id="room-settings-content" class="hidden space-y-3 pt-3 border-t border-slate-800">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[10px] text-slate-400 mb-1 uppercase font-bold">Admin Security</label>
+            <button onclick="openChangePasswordModal()" class="w-full bg-[#0b0f19] hover:bg-slate-900 border border-slate-800 text-yellow-400 text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer">
+              🔒 Change Admin Password
+            </button>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-400 mb-1 uppercase font-bold">Tournament Date</label>
+            <input type="date" id="tournament-date-input" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400 cursor-pointer">
+          </div>
         </div>
-        <div>
-          <label class="block text-[10px] text-slate-400 mb-1 uppercase font-bold">Tournament Date</label>
-          <input type="date" id="tournament-date-input" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400 cursor-pointer">
+        <div class="flex justify-between items-center pt-3 border-t border-slate-800/80">
+          <button onclick="saveRoomSettings()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-4 py-2 rounded-xl transition cursor-pointer">Update Settings</button>
+          <button onclick="deleteCurrentRoom()" class="bg-red-950/50 hover:bg-red-900/50 border border-red-900/50 text-red-400 text-xs font-bold px-4 py-2 rounded-xl transition cursor-pointer">🗑️ Delete Room</button>
         </div>
-      </div>
-      <div class="flex justify-between items-center pt-3 border-t border-slate-800/80">
-        <button onclick="saveRoomSettings()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-4 py-2 rounded-xl transition cursor-pointer">Update Settings</button>
-        <button onclick="deleteCurrentRoom()" class="bg-red-950/50 hover:bg-red-900/50 border border-red-900/50 text-red-400 text-xs font-bold px-4 py-2 rounded-xl transition cursor-pointer">🗑️ Delete Room</button>
       </div>
     </section>
 
     <!-- Participating Teams & Players Section -->
-    <section class="bg-[#111827] rounded-2xl p-4 border border-slate-800 shadow-xl">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wide">🛡️ Participating Teams, Logos & Player Photos</h2>
+    <section class="bg-[#111827] rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3">
+      <div class="flex justify-between items-center">
+        <button onclick="toggleSection('teams-content', this)" class="flex items-center gap-2 text-xs font-bold text-slate-200 uppercase tracking-wide cursor-pointer focus:outline-none">
+          <span>🛡️ Participating Teams, Logos & Player Photos</span>
+          <span class="text-slate-400 text-sm toggle-icon">▼</span>
+        </button>
         <button onclick="addNewTeam()" class="bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-xs font-black px-3 py-2 rounded-xl transition cursor-pointer shadow-md shadow-yellow-400/10">+ Add Team</button>
       </div>
-      <div id="admin-teams-container" class="space-y-4">
-        <div class="text-center py-6 text-slate-500 text-xs">Loading teams...</div>
+      <div id="teams-content" class="hidden space-y-4 pt-3 border-t border-slate-800">
+        <div id="admin-teams-container" class="space-y-4">
+          <div class="text-center py-6 text-slate-500 text-xs">Loading teams...</div>
+        </div>
       </div>
     </section>
 
     <!-- Brackets & Match Scores Section -->
     <section class="bg-[#111827] rounded-2xl p-4 border border-slate-800 shadow-xl">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wide">⚔️ Brackets & Match Scores</h2>
+        <div class="flex items-center gap-2">
+          <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wide">⚔️ Brackets & Match Scores</h2>
+          <!-- Gear Icon to toggle delete buttons -->
+          <button onclick="toggleBracketsDeleteButtons()" id="brackets-gear-btn" title="Toggle Delete Controls" class="text-slate-400 hover:text-yellow-400 bg-[#0b0f19] border border-slate-800 hover:border-slate-700 p-1.5 rounded-lg transition cursor-pointer text-xs flex items-center justify-center">
+            ⚙️
+          </button>
+        </div>
         <button onclick="addNewBracket()" class="bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-xs font-black px-3 py-2 rounded-xl transition cursor-pointer shadow-md shadow-yellow-400/10">+ New Bracket</button>
       </div>
       <div id="admin-brackets-container" class="space-y-6">
@@ -162,6 +178,33 @@
     
     const viewRoomBtn = document.getElementById("view-room-btn");
     viewRoomBtn.href = roomParam ? `room.html?room=${roomParam}` : `room.html`;
+
+    // Global state for delete buttons visibility inside the Brackets container
+    window.bracketsDeleteVisible = false;
+
+    window.toggleBracketsDeleteButtons = function() {
+      window.bracketsDeleteVisible = !window.bracketsDeleteVisible;
+      const gearBtn = document.getElementById("brackets-gear-btn");
+      if (window.bracketsDeleteVisible) {
+        gearBtn.classList.add("border-yellow-400", "text-yellow-400", "bg-yellow-400/10");
+      } else {
+        gearBtn.classList.remove("border-yellow-400", "text-yellow-400", "bg-yellow-400/10");
+      }
+      renderAdminBrackets();
+    };
+
+    // Toggle Section Helper
+    window.toggleSection = function(contentId, btnEl) {
+      const content = document.getElementById(contentId);
+      const icon = btnEl.querySelector('.toggle-icon');
+      if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        if (icon) icon.textContent = '▲';
+      } else {
+        content.classList.add('hidden');
+        if (icon) icon.textContent = '▼';
+      }
+    };
 
     try {
       const app = initializeApp(firebaseConfig);
@@ -330,7 +373,7 @@
                 </div>
                 <div class="flex gap-2 w-full sm:w-auto justify-end">
                   <button onclick="openAddMatchModal('${bracketId}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold px-3 py-1.5 rounded-xl cursor-pointer">+ Add Match</button>
-                  <button onclick="deleteBracket('${bracketId}')" class="text-red-400 hover:text-red-300 text-[10px] font-bold px-2 py-1.5 cursor-pointer">Delete Bracket</button>
+                  <button onclick="deleteBracket('${bracketId}')" class="text-red-400 hover:text-red-300 text-[10px] font-bold px-2 py-1.5 cursor-pointer ${window.bracketsDeleteVisible ? '' : 'hidden'}">Delete Bracket</button>
                 </div>
               </div>
               <div class="space-y-4">
@@ -365,7 +408,7 @@
                             </select>
                           </div>
                         </div>
-                        <button onclick="deleteMatchFromBracket('${bracketId}', ${mIdx})" class="text-red-400 hover:text-red-300 text-xs font-bold cursor-pointer">🗑️ Delete Match</button>
+                        <button onclick="deleteMatchFromBracket('${bracketId}', ${mIdx})" class="text-red-400 hover:text-red-300 text-xs font-bold cursor-pointer ${window.bracketsDeleteVisible ? '' : 'hidden'}">🗑️ Delete Match</button>
                       </div>
 
                       <div class="overflow-x-auto">
@@ -473,7 +516,6 @@
         }
       };
 
-      // Fixed manualSave to reliably save the tournament date using explicit set() paths
       window.manualSave = function() {
         const date = document.getElementById("tournament-date-input").value;
         Promise.all([
