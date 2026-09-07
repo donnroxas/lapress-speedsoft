@@ -389,30 +389,54 @@
         const bracketName = (typeof bracketObj === 'object' && bracketObj !== null && bracketObj.name) ? bracketObj.name : bId.replace('_', ' ');
         const matches = Array.isArray(bracketObj) ? bracketObj : Object.values(bracketObj?.matches || {});
 
-        let bracketTeamScores = teamsData.map((team, idx) => ({
-          idx, name: team.name || `Team ${idx}`, points: 0
-        }));
+        // Identify which team indices actually participate in this bracket's matches
+        const participatingTeamIndices = new Set();
+        matches.forEach(match => {
+          if (match.teamAIdx !== undefined && match.teamAIdx !== null && match.teamAIdx >= 0) {
+            participatingTeamIndices.add(match.teamAIdx);
+          }
+          if (match.teamBIdx !== undefined && match.teamBIdx !== null && match.teamBIdx >= 0) {
+            participatingTeamIndices.add(match.teamBIdx);
+          }
+        });
+
+        // Build team scores only for teams participating in this bracket
+        let bracketTeamScores = [];
+        participatingTeamIndices.forEach(idx => {
+          if (teamsData[idx]) {
+            bracketTeamScores.push({
+              idx,
+              name: teamsData[idx].name || `Team ${idx}`,
+              points: 0
+            });
+          }
+        });
 
         matches.forEach(match => {
           const tAIdx = match.teamAIdx;
           const tBIdx = match.teamBIdx;
-          if (tAIdx >= 0 && tAIdx < bracketTeamScores.length) {
+          
+          const teamAObj = bracketTeamScores.find(t => t.idx === tAIdx);
+          if (teamAObj) {
             const sumA = (match.teamARounds || []).reduce((a, b) => a + (parseInt(b) || 0), 0);
-            bracketTeamScores[tAIdx].points += (sumA - (parseInt(match.teamAPenalty) || 0));
+            teamAObj.points += (sumA - (parseInt(match.teamAPenalty) || 0));
           }
-          if (tBIdx >= 0 && tBIdx < bracketTeamScores.length) {
+
+          const teamBObj = bracketTeamScores.find(t => t.idx === tBIdx);
+          if (teamBObj) {
             const sumB = (match.teamBRounds || []).reduce((a, b) => a + (parseInt(b) || 0), 0);
-            bracketTeamScores[tBIdx].points += (sumB - (parseInt(match.teamBPenalty) || 0));
+            teamBObj.points += (sumB - (parseInt(match.teamBPenalty) || 0));
           }
         });
+
         bracketTeamScores.sort((a, b) => b.points - a.points);
 
-        let bracketRankingsHtml = bracketTeamScores.map((t, rIdx) => `
+        let bracketRankingsHtml = bracketTeamScores.length > 0 ? bracketTeamScores.map((t, rIdx) => `
           <div class="flex justify-between items-center bg-slate-900/60 px-2.5 py-1 rounded border border-slate-800/50 text-[11px]">
             <span class="text-slate-300 font-medium">#${rIdx + 1} ${t.name}</span>
             <span class="text-yellow-400 font-bold">${t.points} pts</span>
           </div>
-        `).join('');
+        `).join('') : `<div class="text-center py-2 text-slate-500 text-[11px] col-span-full">No teams scheduled in this bracket yet.</div>`;
 
         let matchesHtml = "";
         if (matches.length === 0) {
