@@ -157,45 +157,28 @@
         });
       }
 
-      // 2. Check for multi-room structure under /rooms
-      if (rootData.rooms && typeof rootData.rooms === 'object') {
-        Object.keys(rootData.rooms).forEach(key => {
-          const rData = rootData.rooms[key] || {};
-          
-          let foundName = 
-            rData.room_settings?.roomName || 
-            rData.roomName || 
-            rData.title || 
-            rData.name;
-
-          let foundPassword = 
-            rData.room_settings?.adminPassword || 
-            rData.room_settings?.password || 
-            rData.adminPassword || 
-            rData.password;
-
-          if ((!foundName || !foundPassword) && typeof rData === 'object') {
-            for (const subKey in rData) {
-              if (rData[subKey] && typeof rData[subKey] === 'object') {
-                if (!foundName && rData[subKey].roomName) foundName = rData[subKey].roomName;
-                if (!foundPassword && (rData[subKey].adminPassword || rData[subKey].password)) {
-                  foundPassword = rData[subKey].adminPassword || rData[subKey].password;
-                }
-              }
-            }
-          }
-
-          const roomName = foundName || `Room (${key.substring(0, 8)})`;
-          const roomPassword = foundPassword || "N/A";
-
-          rooms.push({
-            id: key,
-            name: roomName,
-            path: `rooms/${key}`,
-            adminPassword: roomPassword
-          });
+      // 2. Check for multi-room structure under /rooms or /active_rooms
+      const roomsNode = rootData.rooms || rootData.active_rooms;
+      if (roomsNode && typeof roomsNode === 'object') {
+        Object.keys(roomsNode).forEach(key => {
+          const rData = roomsNode[key] || {};
+          extractRoomData(key, rData, rooms, 'rooms/' + key);
         });
       }
+
+      // 3. Fallback: Scan root keys if rooms are stored as independent sibling nodes
+      Object.keys(rootData).forEach(key => {
+        if (['room_settings', 'round_matches', 'team_profiles', 'rooms', 'active_rooms', 'users'].includes(key)) return;
+        
+        const rData = rootData[key];
+        if (rData && typeof rData === 'object') {
+          if (rData.roomName || rData.room_settings || rData.adminPassword || rData.password) {
+            if (!rooms.some(r => r.id === key)) {
+              extractRoomData(key, rData, rooms, key);
+            }
+          }
+        }
+      });
 
       const badge = document.getElementById("room-count-badge");
       if (badge) badge.textContent = `${rooms.length} Active`;
@@ -242,6 +225,38 @@
         });
 
         listContainer.appendChild(itemEl);
+      });
+    }
+
+    function extractRoomData(key, rData, roomsArray, dbPath) {
+      let foundName = 
+        rData.room_settings?.roomName || 
+        rData.roomName || 
+        rData.title || 
+        rData.name;
+
+      let foundPassword = 
+        rData.room_settings?.adminPassword || 
+        rData.room_settings?.password || 
+        rData.adminPassword || 
+        rData.password;
+
+      if ((!foundName || !foundPassword) && typeof rData === 'object') {
+        for (const subKey in rData) {
+          if (rData[subKey] && typeof rData[subKey] === 'object') {
+            if (!foundName && rData[subKey].roomName) foundName = rData[subKey].roomName;
+            if (!foundPassword && (rData[subKey].adminPassword || rData[subKey].password)) {
+              foundPassword = rData[subKey].adminPassword || rData[subKey].password;
+            }
+          }
+        }
+      }
+
+      roomsArray.push({
+        id: key,
+        name: foundName || `Room (${key.substring(0, 8)})`,
+        path: dbPath,
+        adminPassword: foundPassword || "N/A"
       });
     }
 
