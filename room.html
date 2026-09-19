@@ -164,7 +164,7 @@
     const bracketsRef = ref(db, `${dbBasePath}/brackets`);
 
     let globalStreamUrl = "";
-    let totalRounds = 5;
+    let totalRounds = 5; // Enforced default minimum
     let teamsData = [];
     let allBrackets = {};
     let roomAdminPassword = "admin";
@@ -172,7 +172,10 @@
     onValue(roomRef, (snapshot) => {
       const settings = snapshot.val();
       if (settings) {
-        totalRounds = parseInt(settings.roundsPerGame) || 5;
+        // Enforce at least 5 rounds, ignoring lower DB settings if any exist
+        const dbRounds = parseInt(settings.roundsPerGame);
+        totalRounds = (!isNaN(dbRounds) && dbRounds > 0) ? Math.max(dbRounds, 5) : 5;
+        
         globalStreamUrl = settings.streamUrl || "";
         
         if (settings.adminPassword && settings.adminPassword.trim() !== "") {
