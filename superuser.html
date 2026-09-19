@@ -15,37 +15,74 @@
 </head>
 <body class="bg-[#0b0f19] text-white p-4 max-w-2xl mx-auto min-h-screen pb-16 relative font-sans">
 
-  <!-- Header -->
-  <header class="mb-6 flex justify-between items-center">
-    <div>
-      <h1 class="text-xl font-black tracking-wide uppercase text-yellow-400">LA PRESS SPEEDSOFT</h1>
-      <p class="text-xs text-slate-400 mt-0.5">Live Tournament Hub & Scores</p>
-    </div>
-    <button onclick="openCreateModal()" class="bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl transition shadow-lg shadow-yellow-400/10 cursor-pointer">
-      + Create Room
-    </button>
-  </header>
+  <!-- FIREBASE AUTH LOGIN GATE MODAL -->
+  <div id="auth-gate-modal" class="fixed inset-0 bg-[#0b0f19]/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-[#111827] border border-slate-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative space-y-4">
+      <div class="text-center pb-2">
+        <h2 class="text-base font-black text-yellow-400 uppercase tracking-wider">🔒 Restricted Portal</h2>
+        <p class="text-[11px] text-slate-400 mt-1">Sign in with your registered Firebase account to access the tournament dashboard.</p>
+      </div>
 
-  <!-- SEARCH & FILTER BAR -->
-  <div class="flex gap-2 mb-6">
-    <div class="relative flex-1">
-      <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-500">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-      </span>
-      <input type="text" id="search-input" oninput="filterRooms()" placeholder="Search room or host..." class="w-full bg-[#111827] border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-slate-700 transition" />
+      <div class="space-y-3">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Email Address</label>
+          <input type="email" id="auth-email" placeholder="e.g. roxas.donn@gmail.com" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400" />
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Password</label>
+          <input type="password" id="auth-password" placeholder="••••••••" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400" />
+        </div>
+      </div>
+
+      <div id="auth-error-msg" class="text-red-400 text-[11px] text-center hidden"></div>
+
+      <div class="pt-2">
+        <button onclick="handleFirebaseLogin()" class="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black text-xs py-3 rounded-xl transition shadow-lg shadow-yellow-400/10 cursor-pointer">
+          Sign In to Portal 🚀
+        </button>
+      </div>
     </div>
-    <select id="status-filter" onchange="filterRooms()" class="bg-[#111827] border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-slate-700 transition cursor-pointer">
-      <option value="all">All Status</option>
-      <option value="live">Live Now</option>
-    </select>
   </div>
 
-  <!-- ROOMS LIST CONTAINER -->
-  <section id="rooms-container" class="space-y-4">
-    <div class="text-center py-10 text-slate-500 text-xs bg-[#111827]/50 rounded-2xl border border-slate-800/80">
-      Loading tournament rooms...
+  <!-- Main Portal Content (Hidden until authenticated) -->
+  <div id="portal-content" class="opacity-0 transition-opacity duration-500">
+    <!-- Header -->
+    <header class="mb-6 flex justify-between items-center">
+      <div>
+        <h1 class="text-xl font-black tracking-wide uppercase text-yellow-400">LA PRESS SPEEDSOFT</h1>
+        <p class="text-xs text-slate-400 mt-0.5">Live Tournament Hub & Scores</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="openCreateModal()" class="bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl transition shadow-lg shadow-yellow-400/10 cursor-pointer">
+          + Create Room
+        </button>
+        <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs px-3 py-2.5 rounded-xl transition cursor-pointer" title="Sign Out">
+          🚪
+        </button>
+      </div>
+    </header>
+
+    <!-- SEARCH & FILTER BAR -->
+    <div class="flex gap-2 mb-6">
+      <div class="relative flex-1">
+        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-500">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </span>
+        <input type="text" id="search-input" oninput="filterRooms()" placeholder="Search room or host..." class="w-full bg-[#111827] border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-slate-700 transition" />
+      </div>
+      <select id="status-filter" onchange="filterRooms()" class="bg-[#111827] border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-slate-700 transition cursor-pointer">
+        <option value="all">All Status</option>
+        <option value="live">Live Now</option>
+      </select>
     </div>
-  </section>
+
+    <!-- ROOMS LIST CONTAINER -->
+    <section id="rooms-container" class="space-y-4">
+      <div class="text-center py-10 text-slate-500 text-xs bg-[#111827]/50 rounded-2xl border border-slate-800/80">
+        Loading tournament rooms...
+      </div>
+    </section>
+  </div>
 
   <!-- CREATE ROOM MODAL -->
   <div id="create-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
@@ -115,6 +152,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, get, set, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCnDxO6WzA9n4XyF_-0QhT3SksKaUV9C7Q",
@@ -129,9 +167,58 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    const auth = getAuth(app);
 
     let allRoomsCache = [];
     let countdownInterval = null;
+
+    // Monitor Firebase Authentication state
+    onAuthStateChanged(auth, (user) => {
+      const gateModal = document.getElementById("auth-gate-modal");
+      const portalContent = document.getElementById("portal-content");
+
+      if (user) {
+        // Authenticated successfully - unlock portal
+        gateModal.style.display = "none";
+        portalContent.classList.remove("opacity-0");
+        loadRoomsPortal();
+      } else {
+        // Not logged in - show lock screen
+        gateModal.style.display = "flex";
+        portalContent.classList.add("opacity-0");
+      }
+    });
+
+    window.handleFirebaseLogin = async function() {
+      const email = document.getElementById("auth-email").value.trim();
+      const password = document.getElementById("auth-password").value;
+      const errorDiv = document.getElementById("auth-error-msg");
+
+      errorDiv.classList.add("hidden");
+      errorDiv.textContent = "";
+
+      if (!email || !password) {
+        errorDiv.textContent = "Please enter both email and password.";
+        errorDiv.classList.remove("hidden");
+        return;
+      }
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = "Invalid login credentials. Please check your email or password.";
+        errorDiv.classList.remove("hidden");
+      }
+    };
+
+    window.handleLogout = async function() {
+      try {
+        await signOut(auth);
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
     async function loadRoomsPortal() {
       const container = document.getElementById("rooms-container");
@@ -438,8 +525,6 @@
     window.handleRoomAccess = function(rId, defaultPass) {
       window.location.href = `room.html?room=${rId}`;
     };
-
-    loadRoomsPortal();
   </script>
 </body>
 </html>
