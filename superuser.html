@@ -128,15 +128,15 @@
       
       <div class="border-b border-slate-800 pb-3 pr-8">
         <h3 class="text-sm font-black text-red-400 uppercase tracking-wide">Delete Tournament Room</h3>
-        <p class="text-[10px] text-slate-400">Enter admin password to delete this room permanently</p>
+        <p class="text-[10px] text-slate-400">Enter your login password to confirm room deletion</p>
       </div>
 
       <input type="hidden" id="delete-target-room-id" />
 
       <div class="space-y-3">
         <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Admin Password</label>
-          <input type="password" id="delete-room-pass" placeholder="Enter admin password" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-400" />
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Your Login Password</label>
+          <input type="password" id="delete-room-pass" placeholder="Enter your login password" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-400" />
         </div>
       </div>
 
@@ -438,28 +438,20 @@
       const passwordInput = document.getElementById("delete-room-pass").value;
 
       if (!passwordInput) {
-        alert("Please enter the admin password to delete this room.");
+        alert("Please enter your login password to confirm deletion.");
+        return;
+      }
+
+      if (!auth.currentUser) {
+        alert("No active login session found. Please re-sign in.");
         return;
       }
 
       try {
-        const roomRef = ref(db, `rooms/${roomId}/room_settings`);
-        const snapshot = await get(roomRef);
+        // Verify the login password against Firebase Authentication
+        await signInWithEmailAndPassword(auth, auth.currentUser.email, passwordInput);
 
-        if (!snapshot.exists()) {
-          alert("Room not found.");
-          closeDeleteModal();
-          return;
-        }
-
-        const settings = snapshot.val();
-        const correctPassword = settings.adminPassword || "admin";
-
-        if (passwordInput !== correctPassword) {
-          alert("Incorrect admin password.");
-          return;
-        }
-
+        // If login password is correct, proceed to delete the room
         const fullRoomRef = ref(db, `rooms/${roomId}`);
         await remove(fullRoomRef);
 
@@ -468,7 +460,7 @@
         loadRoomsPortal();
       } catch (err) {
         console.error(err);
-        alert("Failed to delete the room.");
+        alert("Incorrect login password. Deletion cancelled.");
       }
     };
 
