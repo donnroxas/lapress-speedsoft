@@ -80,9 +80,15 @@
     const db = getDatabase(app);
 
     function loginSuperUser() {
-      const email = document.getElementById("email-input").value;
+      const email = document.getElementById("email-input").value.trim();
       const password = document.getElementById("password-input").value;
       const errorEl = document.getElementById("auth-error");
+
+      if (!email || !password) {
+        errorEl.textContent = "Please fill in both fields.";
+        errorEl.classList.remove("hidden");
+        return;
+      }
 
       signInWithEmailAndPassword(auth, email, password)
         .then(() => {
@@ -123,7 +129,6 @@
     }
 
     function listenToRooms() {
-      // Listen to the root of the database since rooms are stored at root level
       const rootRef = ref(db);
       onValue(rootRef, (snapshot) => {
         const data = snapshot.val();
@@ -154,11 +159,9 @@
 
       let rooms = [];
 
-      // Iterate through all root-level keys to discover active tournament rooms
       Object.keys(rootData).forEach(key => {
         const rData = rootData[key];
         
-        // Skip non-room top-level metadata arrays/objects if any
         if (rData && typeof rData === 'object') {
           const settings = rData.room_settings || {};
           
@@ -168,7 +171,7 @@
           rooms.push({
             id: key,
             name: roomName,
-            path: key, // Root-level path
+            path: key,
             adminPassword: roomPassword
           });
         }
@@ -196,7 +199,7 @@
               <span class="text-[10px] text-yellow-400 bg-yellow-400/10 border border-yellow-400/20 px-2 py-0.5 rounded font-mono">🔑 Pass: ${escapeHtml(room.adminPassword)}</span>
             </div>
           </div>
-          <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <div class="press-actions flex items-center gap-2 w-full sm:w-auto justify-end">
             <a href="admin.html?room=${room.id}" target="_blank" 
                class="bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-400 border border-yellow-400/30 text-xs font-semibold px-2.5 py-1.5 rounded transition text-center">
               ⚙️ Admin Mode
@@ -233,6 +236,7 @@
       });
     }
 
+    // Event listeners
     document.getElementById("auth-btn").addEventListener("click", loginSuperUser);
     document.getElementById("password-input").addEventListener("keypress", (e) => {
       if (e.key === "Enter") loginSuperUser();
