@@ -123,64 +123,57 @@
     }
 
     function listenToRooms() {
+      // Listen to the root of the database since rooms are stored at root level
       const rootRef = ref(db);
       onValue(rootRef, (snapshot) => {
         const data = snapshot.val();
         renderRooms(data);
+      }, (error) => {
+        console.error("Firebase read error:", error);
+        document.getElementById("rooms-list").innerHTML = `<div class="text-center py-6 text-red-400 text-xs">Permission denied or error loading rooms.</div>`;
       });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
 
     function renderRooms(rootData) {
       const listContainer = document.getElementById("rooms-list");
+      const badge = document.getElementById("room-count-badge");
       if (!listContainer) return;
       
       listContainer.innerHTML = "";
 
       if (!rootData || typeof rootData !== 'object') {
         listContainer.innerHTML = `<div class="text-center py-6 text-slate-500 text-xs">No active rooms found in Firebase.</div>`;
-        const badge = document.getElementById("room-count-badge");
         if (badge) badge.textContent = "0 Active";
         return;
       }
 
       let rooms = [];
 
-      // 1. Check for default root-level room
-      if (rootData.room_settings || rootData.round_matches || rootData.team_profiles) {
-        const rootName = rootData.room_settings?.roomName || rootData.roomName || "LA PRESS ARENA (Default)";
-        const rootPassword = rootData.room_settings?.adminPassword || rootData.room_settings?.password || rootData.adminPassword || "N/A";
-        rooms.push({
-          id: "default",
-          name: rootName,
-          path: "",
-          adminPassword: rootPassword
-        });
-      }
-
-      // 2. Check for multi-room structure under /rooms or /active_rooms
-      const roomsNode = rootData.rooms || rootData.active_rooms;
-      if (roomsNode && typeof roomsNode === 'object') {
-        Object.keys(roomsNode).forEach(key => {
-          const rData = roomsNode[key] || {};
-          extractRoomData(key, rData, rooms, 'rooms/' + key);
-        });
-      }
-
-      // 3. Fallback: Scan root keys if rooms are stored as independent sibling nodes
+      // Iterate through all root-level keys to discover active tournament rooms
       Object.keys(rootData).forEach(key => {
-        if (['room_settings', 'round_matches', 'team_profiles', 'rooms', 'active_rooms', 'users'].includes(key)) return;
-        
         const rData = rootData[key];
+        
+        // Skip non-room top-level metadata arrays/objects if any
         if (rData && typeof rData === 'object') {
-          if (rData.roomName || rData.room_settings || rData.adminPassword || rData.password) {
-            if (!rooms.some(r => r.id === key)) {
-              extractRoomData(key, rData, rooms, key);
-            }
-          }
+          const settings = rData.room_settings || {};
+          
+          const roomName = settings.roomName || rData.roomName || rData.title || key.replace(/-/g, ' ').toUpperCase();
+          const roomPassword = settings.adminPassword || settings.password || rData.adminPassword || rData.password || "N/A";
+
+          rooms.push({
+            id: key,
+            name: roomName,
+            path: key, // Root-level path
+            adminPassword: roomPassword
+          });
         }
       });
 
-      const badge = document.getElementById("room-count-badge");
       if (badge) badge.textContent = `${rooms.length} Active`;
 
       if (rooms.length === 0) {
@@ -199,16 +192,16 @@
               <span class="text-[9px] bg-slate-900 border border-slate-800 text-slate-400 px-1.5 py-0.5 rounded uppercase">ID: ${room.id}</span>
             </div>
             <div class="flex items-center gap-2 mt-1">
-              <p class="text-[10px] text-slate-500">Database Path: ${room.path ? '/' + room.path : 'Root Level'}</p>
+              <p class="text-[10px] text-slate-500">Database Path: /${room.path}</p>
               <span class="text-[10px] text-yellow-400 bg-yellow-400/10 border border-yellow-400/20 px-2 py-0.5 rounded font-mono">🔑 Pass: ${escapeHtml(room.adminPassword)}</span>
             </div>
           </div>
           <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-            <a href="admin.html${room.id !== 'default' ? '?room=' + room.id : ''}" target="_blank" 
+            <a href="admin.html?room=${room.id}" target="_blank" 
                class="bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-400 border border-yellow-400/30 text-xs font-semibold px-2.5 py-1.5 rounded transition text-center">
               ⚙️ Admin Mode
             </a>
-            <a href="room.html${room.id !== 'default' ? '?room=' + room.id : ''}" target="_blank" 
+            <a href="room.html?room=${room.id}" target="_blank" 
                class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold px-2.5 py-1.5 rounded transition text-center">
               👁️ View Room
             </a>
@@ -228,56 +221,16 @@
       });
     }
 
-    function extractRoomData(key, rData, roomsArray, dbPath) {
-      let foundName = 
-        rData.room_settings?.roomName || 
-        rData.roomName || 
-        rData.title || 
-        rData.name;
-
-      let foundPassword = 
-        rData.room_settings?.adminPassword || 
-        rData.room_settings?.password || 
-        rData.adminPassword || 
-        rData.password;
-
-      if ((!foundName || !foundPassword) && typeof rData === 'object') {
-        for (const subKey in rData) {
-          if (rData[subKey] && typeof rData[subKey] === 'object') {
-            if (!foundName && rData[subKey].roomName) foundName = rData[subKey].roomName;
-            if (!foundPassword && (rData[subKey].adminPassword || rData[subKey].password)) {
-              foundPassword = rData[subKey].adminPassword || rData[subKey].password;
-            }
-          }
-        }
-      }
-
-      roomsArray.push({
-        id: key,
-        name: foundName || `Room (${key.substring(0, 8)})`,
-        path: dbPath,
-        adminPassword: foundPassword || "N/A"
-      });
-    }
-
     function deleteRoom(path, roomName) {
       const confirmDelete = confirm(`⚠️ ARE YOU SURE?\n\nThis will permanently delete "${roomName}" along with all its settings, teams, and match scores!`);
-      
       if (!confirmDelete) return;
 
-      if (path === "") {
-        remove(ref(db, 'room_settings'));
-        remove(ref(db, 'team_profiles'));
-        remove(ref(db, 'round_matches'));
-      } else {
-        remove(ref(db, path));
-      }
-
-      alert(`Room "${roomName}" has been deleted.`);
-    }
-
-    function escapeHtml(str) {
-      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      remove(ref(db, path)).then(() => {
+        alert(`Room "${roomName}" has been deleted.`);
+      }).catch(err => {
+        console.error(err);
+        alert("Failed to delete room.");
+      });
     }
 
     document.getElementById("auth-btn").addEventListener("click", loginSuperUser);
