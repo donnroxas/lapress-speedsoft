@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LA Press Speedsoft - SuperUser Control Hub</title>
+  <title>LA Press Speedsoft - Tournament Hub & Scores</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     /* Force date picker icon to be visible and white/yellow on dark background */
@@ -15,63 +15,37 @@
 </head>
 <body class="bg-[#0b0f19] text-white p-4 max-w-2xl mx-auto min-h-screen pb-16 relative font-sans">
 
-  <!-- AUTHENTICATION CONTAINER -->
-  <div id="auth-container" class="mt-20 bg-[#111827] border border-slate-800 rounded-2xl p-6 shadow-2xl max-w-sm mx-auto text-center">
-    <div class="text-3xl mb-2">⚡</div>
-    <h1 class="text-base font-black uppercase text-yellow-400 tracking-wider mb-1">SuperUser Authentication</h1>
-    <p class="text-xs text-slate-400 mb-4">Sign in with your registered Firebase admin credentials.</p>
-    
-    <input type="email" id="email-input" placeholder="Admin Email" 
-           class="w-full bg-[#0b0f19] border border-slate-800 text-white text-xs px-3 py-2.5 rounded-xl mb-2.5 text-center focus:outline-none focus:border-yellow-400 transition" />
-    
-    <input type="password" id="password-input" placeholder="Password" 
-           class="w-full bg-[#0b0f19] border border-slate-800 text-white text-xs px-3 py-2.5 rounded-xl mb-3 text-center focus:outline-none focus:border-yellow-400 transition" />
-    
-    <button id="auth-btn" class="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black text-xs py-2.5 rounded-xl transition shadow-lg shadow-yellow-400/10 cursor-pointer uppercase tracking-wide">
-      Authenticate
-    </button>
-    <p id="auth-error" class="text-red-400 text-[11px] mt-2 hidden">Invalid credentials or unauthorized user.</p>
-  </div>
-
-  <!-- DASHBOARD CONTAINER (HIDDEN UNTIL AUTHENTICATED) -->
-  <div id="dashboard-container" class="hidden">
-    <!-- Header -->
-    <header class="mb-6 flex justify-between items-center">
-      <div>
-        <h1 class="text-xl font-black tracking-wide uppercase text-yellow-400">⚡ SUPERUSER DASHBOARD</h1>
-        <p class="text-xs text-slate-400 mt-0.5">Root Management & Multi-Room Control</p>
-      </div>
-      <div class="flex items-center gap-2">
-        <button onclick="openCreateModal()" class="bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl transition shadow-lg shadow-yellow-400/10 cursor-pointer">
-          + Create Room
-        </button>
-        <button id="logout-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-2.5 rounded-xl border border-slate-700 cursor-pointer transition">
-          Lock
-        </button>
-      </div>
-    </header>
-
-    <!-- SEARCH & FILTER BAR -->
-    <div class="flex gap-2 mb-6">
-      <div class="relative flex-1">
-        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-500">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-        </span>
-        <input type="text" id="search-input" oninput="filterRooms()" placeholder="Search room or host..." class="w-full bg-[#111827] border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-slate-700 transition" />
-      </div>
-      <select id="status-filter" onchange="filterRooms()" class="bg-[#111827] border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-slate-700 transition cursor-pointer">
-        <option value="all">All Status</option>
-        <option value="live">Live Now</option>
-      </select>
+  <!-- Header -->
+  <header class="mb-6 flex justify-between items-center">
+    <div>
+      <h1 class="text-xl font-black tracking-wide uppercase text-yellow-400">LA PRESS SPEEDSOFT</h1>
+      <p class="text-xs text-slate-400 mt-0.5">Live Tournament Hub & Scores</p>
     </div>
+    <button onclick="openCreateModal()" class="bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl transition shadow-lg shadow-yellow-400/10 cursor-pointer">
+      + Create Room
+    </button>
+  </header>
 
-    <!-- ROOMS LIST CONTAINER -->
-    <section id="rooms-container" class="space-y-4">
-      <div class="text-center py-10 text-slate-500 text-xs bg-[#111827]/50 rounded-2xl border border-slate-800/80">
-        Loading tournament rooms...
-      </div>
-    </section>
+  <!-- SEARCH & FILTER BAR -->
+  <div class="flex gap-2 mb-6">
+    <div class="relative flex-1">
+      <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-500">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      </span>
+      <input type="text" id="search-input" oninput="filterRooms()" placeholder="Search room or host..." class="w-full bg-[#111827] border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-slate-700 transition" />
+    </div>
+    <select id="status-filter" onchange="filterRooms()" class="bg-[#111827] border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-slate-700 transition cursor-pointer">
+      <option value="all">All Status</option>
+      <option value="live">Live Now</option>
+    </select>
   </div>
+
+  <!-- ROOMS LIST CONTAINER -->
+  <section id="rooms-container" class="space-y-4">
+    <div class="text-center py-10 text-slate-500 text-xs bg-[#111827]/50 rounded-2xl border border-slate-800/80">
+      Loading tournament rooms...
+    </div>
+  </section>
 
   <!-- CREATE ROOM MODAL -->
   <div id="create-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
@@ -110,10 +84,36 @@
     </div>
   </div>
 
-  <!-- FIREBASE & SUPERUSER PORTAL LOGIC -->
+  <!-- DELETE ROOM MODAL -->
+  <div id="delete-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#111827] border border-slate-800 rounded-2xl w-full max-w-md p-5 shadow-2xl relative space-y-4">
+      <button onclick="closeDeleteModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer">✕</button>
+      
+      <div class="border-b border-slate-800 pb-3 pr-8">
+        <h3 class="text-sm font-black text-red-400 uppercase tracking-wide">Delete Tournament Room</h3>
+        <p class="text-[10px] text-slate-400">Enter admin password to delete this room permanently</p>
+      </div>
+
+      <input type="hidden" id="delete-target-room-id" />
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Admin Password</label>
+          <input type="password" id="delete-room-pass" placeholder="Enter admin password" class="w-full bg-[#0b0f19] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-400" />
+        </div>
+      </div>
+
+      <div class="pt-2">
+        <button onclick="confirmDeleteRoom()" class="w-full bg-red-500 hover:bg-red-400 text-white font-black text-xs py-2.5 rounded-xl transition shadow-lg shadow-red-500/10 cursor-pointer">
+          Permanently Delete Room 🗑️
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIREBASE & PORTAL LOGIC -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getDatabase, ref, get, set, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
@@ -128,72 +128,17 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
     const db = getDatabase(app);
 
     let allRoomsCache = [];
     let countdownInterval = null;
 
-    function loginSuperUser() {
-      const email = document.getElementById("email-input").value.trim();
-      const password = document.getElementById("password-input").value;
-      const errorEl = document.getElementById("auth-error");
-
-      if (!email || !password) {
-        errorEl.textContent = "Please fill in both fields.";
-        errorEl.classList.remove("hidden");
-        return;
-      }
-
-      signInWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          errorEl.classList.add("hidden");
-          showDashboard();
-        })
-        .catch((error) => {
-          errorEl.textContent = error.message;
-          errorEl.classList.remove("hidden");
-        });
-    }
-
-    function logoutSuperUser() {
-      signOut(auth).then(() => {
-        location.reload();
-      }).catch((error) => {
-        console.error("Sign out error", error);
-      });
-    }
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        showDashboard();
-      } else {
-        showAuthScreen();
-      }
-    });
-
-    function showDashboard() {
-      document.getElementById("auth-container").classList.add("hidden");
-      document.getElementById("dashboard-container").classList.remove("hidden");
-      loadRoomsPortal();
-    }
-
-    function showAuthScreen() {
-      document.getElementById("auth-container").classList.remove("hidden");
-      document.getElementById("dashboard-container").classList.add("hidden");
-    }
-
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-    }
-
     async function loadRoomsPortal() {
       const container = document.getElementById("rooms-container");
       
       try {
-        const rootRef = ref(db);
-        const snapshot = await get(rootRef);
+        const roomsRef = ref(db, 'rooms');
+        const snapshot = await get(roomsRef);
         
         if (!snapshot.exists()) {
           container.innerHTML = `
@@ -204,42 +149,30 @@
           return;
         }
 
-        const rootData = snapshot.val();
-        allRoomsCache = [];
+        const roomsData = snapshot.val();
+        allRoomsCache = Object.keys(roomsData).map(rId => {
+          const roomObj = roomsData[rId];
+          const settings = roomObj.room_settings || {};
+          const roomName = settings.roomName || rId.replace(/-/g, ' ').toUpperCase();
+          const streamUrl = settings.streamUrl || "";
+          const teamsMap = roomObj.team_profiles || {};
+          const teamCount = Object.keys(teamsMap).length;
+          const isLiveNow = streamUrl && streamUrl.trim() !== "";
+          const rawDate = settings.roomDate || new Date().toISOString().split('T')[0];
 
-        Object.keys(rootData).forEach(rId => {
-          const roomObj = rootData[rId];
-          
-          if (roomObj && typeof roomObj === 'object') {
-            const settings = roomObj.room_settings || {};
-            const roomName = settings.roomName || roomObj.roomName || roomObj.title || rId.replace(/-/g, ' ').toUpperCase();
-            const streamUrl = settings.streamUrl || roomObj.streamUrl || "";
-            const teamsMap = roomObj.team_profiles || {};
-            const teamCount = Object.keys(teamsMap).length;
-            const isLiveNow = streamUrl && streamUrl.trim() !== "";
-            const rawDate = settings.roomDate || roomObj.roomDate || new Date().toISOString().split('T')[0];
-            const adminPassword = settings.adminPassword || settings.password || roomObj.adminPassword || roomObj.password || "N/A";
+          const [y, m, d] = rawDate.split('-').map(Number);
+          const displayDate = new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-            let displayDate = rawDate;
-            try {
-              const [y, m, d] = rawDate.split('-').map(Number);
-              displayDate = new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            } catch (e) {
-              displayDate = rawDate;
-            }
-
-            allRoomsCache.push({
-              id: rId,
-              name: roomName,
-              path: rId,
-              streamUrl,
-              teamCount,
-              isLiveNow,
-              rawDate,
-              displayDate,
-              adminPassword
-            });
-          }
+          return {
+            id: rId,
+            name: roomName,
+            streamUrl,
+            teamCount,
+            isLiveNow,
+            rawDate,
+            displayDate,
+            adminPassword: settings.adminPassword || "admin"
+          };
         });
 
         renderRoomsList(allRoomsCache);
@@ -270,16 +203,13 @@
         container.innerHTML += `
           <div class="bg-[#111827] border border-slate-800 hover:border-slate-700 rounded-2xl p-4 transition space-y-4 shadow-xl">
             <div class="flex justify-between items-start gap-3">
-              <div>
-                <h3 class="text-sm font-black text-white uppercase tracking-wide">${escapeHtml(room.name)}</h3>
-                <span class="text-[9px] text-slate-500 uppercase">ID: ${room.id}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                ${liveBadgeHtml}
-                <button onclick="deleteRoom('${room.path}', '${escapeHtml(room.name)}')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 w-7 h-7 rounded-xl flex items-center justify-center text-xs transition cursor-pointer" title="Delete Room">
-                  🗑️
+              <div class="flex items-center gap-2 flex-1 min-w-0">
+                <h3 class="text-sm font-black text-white uppercase tracking-wide truncate">${room.name}</h3>
+                <button onclick="openDeleteModal('${room.id}')" title="Delete Room" class="text-slate-500 hover:text-red-400 bg-slate-800/50 hover:bg-red-500/10 p-1.5 rounded-lg transition cursor-pointer shrink-0">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 </button>
               </div>
+              <div class="shrink-0">${liveBadgeHtml}</div>
             </div>
 
             <!-- Date & Timer Section -->
@@ -294,19 +224,15 @@
               </div>
             </div>
 
-            <!-- Meta Details & Admin Password Badge -->
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs text-slate-400 border-t border-slate-800/80 pt-3 px-1 gap-2">
+            <div class="flex items-center justify-between text-xs text-slate-400 border-t border-slate-800/80 pt-3 px-1">
               <div class="flex items-center gap-2">
                 <span>🛡️</span>
                 <span>${room.teamCount} Team${room.teamCount === 1 ? '' : 's'}</span>
               </div>
-              <div>
-                <span class="text-[11px] text-yellow-400 bg-yellow-400/10 border border-yellow-400/20 px-2.5 py-1 rounded-lg font-mono">🔑 Pass: ${escapeHtml(room.adminPassword)}</span>
-              </div>
             </div>
 
             <div>
-              <button onclick="handleRoomAccess('${room.id}')" class="w-full bg-[#0b0f19] hover:bg-slate-900 border border-slate-800 text-yellow-400 hover:text-yellow-300 text-center font-black text-xs py-3 rounded-xl transition cursor-pointer shadow-inner flex items-center justify-center gap-2">
+              <button onclick="handleRoomAccess('${room.id}', '${room.adminPassword}')" class="w-full bg-[#0b0f19] hover:bg-slate-900 border border-slate-800 text-yellow-400 hover:text-yellow-300 text-center font-black text-xs py-3 rounded-xl transition cursor-pointer shadow-inner flex items-center justify-center gap-2">
                 Enter Room ➔
               </button>
             </div>
@@ -323,11 +249,7 @@
 
       document.querySelectorAll('[id^="countdown-"]').forEach(el => {
         const rawDate = el.getAttribute('data-date');
-        if (!rawDate) return;
-        
-        const parts = rawDate.split('-').map(Number);
-        if (parts.length < 3) return;
-        const [y, m, d] = parts;
+        const [y, m, d] = rawDate.split('-').map(Number);
         const targetDateOnly = new Date(y, m - 1, d).getTime();
 
         if (targetDateOnly < currentDateOnly) {
@@ -387,7 +309,7 @@
       const status = document.getElementById("status-filter").value;
 
       const filtered = allRoomsCache.filter(room => {
-        const matchesQuery = room.name.toLowerCase().includes(query) || room.id.toLowerCase().includes(query);
+        const matchesQuery = room.name.toLowerCase().includes(query);
         const matchesStatus = status === 'all' || (status === 'live' && room.isLiveNow);
         return matchesQuery && matchesStatus;
       });
@@ -406,6 +328,55 @@
 
     window.closeCreateModal = function() {
       document.getElementById("create-modal").classList.add("hidden");
+    };
+
+    window.openDeleteModal = function(roomId) {
+      document.getElementById("delete-target-room-id").value = roomId;
+      document.getElementById("delete-room-pass").value = "";
+      document.getElementById("delete-modal").classList.remove("hidden");
+    };
+
+    window.closeDeleteModal = function() {
+      document.getElementById("delete-modal").classList.add("hidden");
+    };
+
+    window.confirmDeleteRoom = async function() {
+      const roomId = document.getElementById("delete-target-room-id").value;
+      const passwordInput = document.getElementById("delete-room-pass").value;
+
+      if (!passwordInput) {
+        alert("Please enter the admin password to delete this room.");
+        return;
+      }
+
+      try {
+        const roomRef = ref(db, `rooms/${roomId}/room_settings`);
+        const snapshot = await get(roomRef);
+
+        if (!snapshot.exists()) {
+          alert("Room not found.");
+          closeDeleteModal();
+          return;
+        }
+
+        const settings = snapshot.val();
+        const correctPassword = settings.adminPassword || "admin";
+
+        if (passwordInput !== correctPassword) {
+          alert("Incorrect admin password.");
+          return;
+        }
+
+        const fullRoomRef = ref(db, `rooms/${roomId}`);
+        await remove(fullRoomRef);
+
+        localStorage.removeItem(`admin_${roomId}`);
+        closeDeleteModal();
+        loadRoomsPortal();
+      } catch (err) {
+        console.error(err);
+        alert("Failed to delete the room.");
+      }
     };
 
     window.createNewRoom = async function() {
@@ -437,11 +408,11 @@
       const roomId = nameInput.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
 
       try {
-        const roomSettingsRef = ref(db, `${roomId}/room_settings`);
-        const snapshot = await get(roomSettingsRef);
+        const roomRef = ref(db, `rooms/${roomId}/room_settings`);
+        const snapshot = await get(roomRef);
 
         if (!snapshot.exists()) {
-          await set(roomSettingsRef, {
+          await set(roomRef, {
             roomName: nameInput,
             roomDate: dateInput,
             adminPassword: passInput,
@@ -458,28 +429,11 @@
       }
     };
 
-    window.handleRoomAccess = function(rId) {
+    window.handleRoomAccess = function(rId, defaultPass) {
       window.location.href = `room.html?room=${rId}`;
     };
 
-    window.deleteRoom = function(path, roomName) {
-      const confirmDelete = confirm(`⚠️ ARE YOU SURE?\n\nThis will permanently delete "${roomName}" along with all its settings, teams, and match scores!`);
-      if (!confirmDelete) return;
-
-      remove(ref(db, path)).then(() => {
-        alert(`Room "${roomName}" has been deleted.`);
-        loadRoomsPortal();
-      }).catch(err => {
-        console.error(err);
-        alert("Failed to delete room.");
-      });
-    };
-
-    document.getElementById("auth-btn").addEventListener("click", loginSuperUser);
-    document.getElementById("password-input").addEventListener("keypress", (e) => {
-      if (e.key === "Enter") loginSuperUser();
-    });
-    document.getElementById("logout-btn").addEventListener("click", logoutSuperUser);
+    loadRoomsPortal();
   </script>
 </body>
 </html>
