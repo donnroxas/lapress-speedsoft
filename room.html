@@ -389,7 +389,6 @@
         const bracketName = (typeof bracketObj === 'object' && bracketObj !== null && bracketObj.name) ? bracketObj.name : bId.replace('_', ' ');
         const matches = Array.isArray(bracketObj) ? bracketObj : Object.values(bracketObj?.matches || {});
 
-        // Identify which team indices actually participate in this bracket's matches
         const participatingTeamIndices = new Set();
         matches.forEach(match => {
           if (match.teamAIdx !== undefined && match.teamAIdx !== null && match.teamAIdx >= 0) {
@@ -400,7 +399,6 @@
           }
         });
 
-        // Build team scores only for teams participating in this bracket
         let bracketTeamScores = [];
         participatingTeamIndices.forEach(idx => {
           if (teamsData[idx]) {
