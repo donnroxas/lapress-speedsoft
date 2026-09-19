@@ -5,12 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LA Press Speedsoft - SuperUser Control</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    input[type="date"]::-webkit-calendar-picker-indicator {
-      filter: invert(1) brightness(1.5);
-      cursor: pointer;
-    }
-  </style>
 </head>
 <body class="bg-[#0b0f19] text-white p-4 max-w-2xl mx-auto min-h-screen pb-16 relative font-sans">
 
@@ -40,7 +34,7 @@
         <h1 class="text-xl font-black tracking-wide uppercase text-yellow-400">⚡ SUPERUSER DASHBOARD</h1>
         <p class="text-xs text-slate-400 mt-0.5">Root Management & Multi-Room Control</p>
       </div>
-      <button id="logout-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-2 rounded-xl border border-slate-700 cursor-pointer">
+      <button id="logout-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-2 rounded-xl border border-slate-700 cursor-pointer transition">
         Lock Session
       </button>
     </header>
@@ -59,7 +53,7 @@
       </select>
     </div>
 
-    <!-- ROOM MANAGEMENT SECTION -->
+    <!-- ROOMS LIST SECTION -->
     <section id="rooms-container" class="space-y-4">
       <div class="text-center py-10 text-slate-500 text-xs bg-[#111827]/50 rounded-2xl border border-slate-800/80">
         Loading registered rooms...
@@ -221,6 +215,7 @@
 
         container.innerHTML += `
           <div class="bg-[#111827] border border-slate-800 hover:border-slate-700 rounded-2xl p-4 transition space-y-4 shadow-xl">
+            <!-- Top Header: Title, Live Status & Delete Icon -->
             <div class="flex justify-between items-start gap-3">
               <div>
                 <h3 class="text-sm font-black text-white uppercase tracking-wide">${escapeHtml(room.name)}</h3>
@@ -246,7 +241,7 @@
               </div>
             </div>
 
-            <!-- Meta Details & Password -->
+            <!-- Meta Details & Admin Password Display -->
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs text-slate-400 border-t border-slate-800/80 pt-3 px-1 gap-2">
               <div class="flex items-center gap-2">
                 <span>🛡️</span>
