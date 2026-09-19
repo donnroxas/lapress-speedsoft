@@ -5,22 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LA Press Speedsoft - SuperUser Control</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(1) brightness(1.5);
+      cursor: pointer;
+    }
+  </style>
 </head>
-<body class="bg-slate-950 text-white p-4 max-w-2xl mx-auto min-h-screen pb-12">
+<body class="bg-[#0b0f19] text-white p-4 max-w-2xl mx-auto min-h-screen pb-16 relative font-sans">
 
   <!-- AUTHENTICATION CONTAINER -->
-  <div id="auth-container" class="mt-20 bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-2xl max-w-sm mx-auto text-center">
+  <div id="auth-container" class="mt-20 bg-[#111827] border border-slate-800 rounded-2xl p-6 shadow-2xl max-w-sm mx-auto text-center">
     <div class="text-3xl mb-2">⚡</div>
     <h1 class="text-base font-black uppercase text-yellow-400 tracking-wider mb-1">SuperUser Authentication</h1>
     <p class="text-xs text-slate-400 mb-4">Sign in with your registered Firebase admin credentials.</p>
     
     <input type="email" id="email-input" placeholder="Admin Email" 
-           class="w-full bg-slate-950 border border-slate-800 text-white text-xs px-3 py-2.5 rounded-lg mb-2.5 text-center focus:outline-none focus:border-yellow-400 transition" />
+           class="w-full bg-[#0b0f19] border border-slate-800 text-white text-xs px-3 py-2.5 rounded-xl mb-2.5 text-center focus:outline-none focus:border-yellow-400 transition" />
     
     <input type="password" id="password-input" placeholder="Password" 
-           class="w-full bg-slate-950 border border-slate-800 text-white text-xs px-3 py-2.5 rounded-lg mb-3 text-center focus:outline-none focus:border-yellow-400 transition" />
+           class="w-full bg-[#0b0f19] border border-slate-800 text-white text-xs px-3 py-2.5 rounded-xl mb-3 text-center focus:outline-none focus:border-yellow-400 transition" />
     
-    <button id="auth-btn" class="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-950 font-bold text-xs py-2.5 rounded-lg transition uppercase tracking-wide">
+    <button id="auth-btn" class="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black text-xs py-2.5 rounded-xl transition shadow-lg shadow-yellow-400/10 cursor-pointer uppercase tracking-wide">
       Authenticate
     </button>
     <p id="auth-error" class="text-red-400 text-[11px] mt-2 hidden">Invalid credentials or unauthorized user.</p>
@@ -29,33 +35,36 @@
   <!-- DASHBOARD CONTAINER (HIDDEN UNTIL AUTHENTICATED) -->
   <div id="dashboard-container" class="hidden">
     <!-- Header -->
-    <header class="mb-5 border-b border-slate-800 pb-3 flex justify-between items-center">
+    <header class="mb-6 flex justify-between items-center">
       <div>
-        <h1 class="text-lg font-black tracking-wider uppercase text-yellow-400 flex items-center gap-2">
-          <span>⚡ SUPERUSER DASHBOARD</span>
-        </h1>
-        <p class="text-[11px] text-slate-400">Root Management & Multi-Room Control</p>
+        <h1 class="text-xl font-black tracking-wide uppercase text-yellow-400">⚡ SUPERUSER DASHBOARD</h1>
+        <p class="text-xs text-slate-400 mt-0.5">Root Management & Multi-Room Control</p>
       </div>
-      <button id="logout-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-1.5 rounded-lg border border-slate-700">
-        Lock
+      <button id="logout-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-2 rounded-xl border border-slate-700 cursor-pointer">
+        Lock Session
       </button>
     </header>
 
-    <!-- ROOM MANAGEMENT SECTION -->
-    <main>
-      <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 shadow-lg">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xs font-bold text-slate-100 uppercase tracking-wide">Active System Rooms</h2>
-          <span id="room-count-badge" class="bg-slate-800 text-yellow-400 font-bold text-[10px] px-2.5 py-1 rounded-full border border-slate-700">
-            0 Active
-          </span>
-        </div>
-
-        <div id="rooms-list" class="space-y-3">
-          <div class="text-center py-6 text-slate-500 text-xs">Loading registered rooms...</div>
-        </div>
+    <!-- SEARCH & FILTER BAR -->
+    <div class="flex gap-2 mb-6">
+      <div class="relative flex-1">
+        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-500">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </span>
+        <input type="text" id="search-input" oninput="filterRooms()" placeholder="Search active room or ID..." class="w-full bg-[#111827] border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-slate-700 transition" />
       </div>
-    </main>
+      <select id="status-filter" onchange="filterRooms()" class="bg-[#111827] border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-slate-700 transition cursor-pointer">
+        <option value="all">All Status</option>
+        <option value="live">Live Now</option>
+      </select>
+    </div>
+
+    <!-- ROOM MANAGEMENT SECTION -->
+    <section id="rooms-container" class="space-y-4">
+      <div class="text-center py-10 text-slate-500 text-xs bg-[#111827]/50 rounded-2xl border border-slate-800/80">
+        Loading registered rooms...
+      </div>
+    </section>
   </div>
 
   <!-- FIREBASE & SUPERUSER LOGIC -->
@@ -78,6 +87,9 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
+
+    let allRoomsCache = [];
+    let countdownInterval = null;
 
     function loginSuperUser() {
       const email = document.getElementById("email-input").value.trim();
@@ -131,11 +143,60 @@
     function listenToRooms() {
       const rootRef = ref(db);
       onValue(rootRef, (snapshot) => {
-        const data = snapshot.val();
-        renderRooms(data);
+        const rootData = snapshot.val();
+        allRoomsCache = [];
+
+        if (!rootData || typeof rootData !== 'object') {
+          document.getElementById("rooms-container").innerHTML = `
+            <div class="text-center py-10 bg-[#111827] rounded-2xl border border-slate-800 p-6 space-y-3">
+              <p class="text-xs text-slate-400">No active tournament rooms found in Firebase.</p>
+            </div>`;
+          return;
+        }
+
+        Object.keys(rootData).forEach(rId => {
+          const roomObj = rootData[rId];
+          
+          if (roomObj && typeof roomObj === 'object') {
+            const settings = roomObj.room_settings || {};
+            const roomName = settings.roomName || roomObj.roomName || roomObj.title || rId.replace(/-/g, ' ').toUpperCase();
+            const streamUrl = settings.streamUrl || roomObj.streamUrl || "";
+            const teamsMap = roomObj.team_profiles || {};
+            const teamCount = Object.keys(teamsMap).length;
+            const isLiveNow = streamUrl && streamUrl.trim() !== "";
+            const rawDate = settings.roomDate || roomObj.roomDate || new Date().toISOString().split('T')[0];
+            const adminPassword = settings.adminPassword || settings.password || roomObj.adminPassword || roomObj.password || "N/A";
+
+            let displayDate = rawDate;
+            try {
+              const [y, m, d] = rawDate.split('-').map(Number);
+              displayDate = new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            } catch (e) {
+              displayDate = rawDate;
+            }
+
+            allRoomsCache.push({
+              id: rId,
+              name: roomName,
+              path: rId,
+              streamUrl,
+              teamCount,
+              isLiveNow,
+              rawDate,
+              displayDate,
+              adminPassword
+            });
+          }
+        });
+
+        renderRoomsList(allRoomsCache);
+
+        if (countdownInterval) clearInterval(countdownInterval);
+        countdownInterval = setInterval(updateCountdowns, 1000);
+
       }, (error) => {
         console.error("Firebase read error:", error);
-        document.getElementById("rooms-list").innerHTML = `<div class="text-center py-6 text-red-400 text-xs">Permission denied or error loading rooms.</div>`;
+        document.getElementById("rooms-container").innerHTML = `<div class="text-center py-6 text-red-400 text-xs">Permission denied or error loading rooms.</div>`;
       });
     }
 
@@ -144,87 +205,153 @@
       return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
 
-    function renderRooms(rootData) {
-      const listContainer = document.getElementById("rooms-list");
-      const badge = document.getElementById("room-count-badge");
-      if (!listContainer) return;
-      
-      listContainer.innerHTML = "";
-
-      if (!rootData || typeof rootData !== 'object') {
-        listContainer.innerHTML = `<div class="text-center py-6 text-slate-500 text-xs">No active rooms found in Firebase.</div>`;
-        if (badge) badge.textContent = "0 Active";
+    window.renderRoomsList = function(rooms) {
+      const container = document.getElementById("rooms-container");
+      if (!rooms.length) {
+        container.innerHTML = `<div class="text-center py-8 text-slate-500 text-xs bg-[#111827] rounded-2xl border border-slate-800">No rooms match your filter.</div>`;
         return;
       }
 
-      let rooms = [];
+      container.innerHTML = "";
 
-      Object.keys(rootData).forEach(key => {
-        const rData = rootData[key];
-        
-        if (rData && typeof rData === 'object') {
-          const settings = rData.room_settings || {};
-          
-          const roomName = settings.roomName || rData.roomName || rData.title || key.replace(/-/g, ' ').toUpperCase();
-          const roomPassword = settings.adminPassword || settings.password || rData.adminPassword || rData.password || "N/A";
+      rooms.forEach(room => {
+        const liveBadgeHtml = room.isLiveNow ? 
+          `<span class="flex items-center gap-1.5 text-[10px] text-emerald-400 font-bold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>LIVE NOW</span>` : 
+          ``;
 
-          rooms.push({
-            id: key,
-            name: roomName,
-            path: key,
-            adminPassword: roomPassword
-          });
-        }
-      });
-
-      if (badge) badge.textContent = `${rooms.length} Active`;
-
-      if (rooms.length === 0) {
-        listContainer.innerHTML = `<div class="text-center py-6 text-slate-500 text-xs">No active rooms found in Firebase.</div>`;
-        return;
-      }
-
-      rooms.forEach((room) => {
-        const itemEl = document.createElement("div");
-        itemEl.className = "bg-slate-950 p-3 rounded-lg border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3";
-
-        itemEl.innerHTML = `
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-bold text-white">${escapeHtml(room.name)}</span>
-              <span class="text-[9px] bg-slate-900 border border-slate-800 text-slate-400 px-1.5 py-0.5 rounded uppercase">ID: ${room.id}</span>
+        container.innerHTML += `
+          <div class="bg-[#111827] border border-slate-800 hover:border-slate-700 rounded-2xl p-4 transition space-y-4 shadow-xl">
+            <div class="flex justify-between items-start gap-3">
+              <div>
+                <h3 class="text-sm font-black text-white uppercase tracking-wide">${escapeHtml(room.name)}</h3>
+                <span class="text-[9px] text-slate-500 uppercase">ID: ${room.id}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                ${liveBadgeHtml}
+                <button onclick="deleteRoom('${room.path}', '${escapeHtml(room.name)}')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 w-7 h-7 rounded-xl flex items-center justify-center text-xs transition cursor-pointer" title="Delete Room">
+                  🗑️
+                </button>
+              </div>
             </div>
-            <div class="flex items-center gap-2 mt-1">
-              <p class="text-[10px] text-slate-500">Database Path: /${room.path}</p>
-              <span class="text-[10px] text-yellow-400 bg-yellow-400/10 border border-yellow-400/20 px-2 py-0.5 rounded font-mono">🔑 Pass: ${escapeHtml(room.adminPassword)}</span>
+
+            <!-- Date & Timer Section -->
+            <div class="flex flex-col sm:flex-row items-center justify-between bg-[#0b0f19] border border-slate-800/80 rounded-xl p-3.5 gap-3">
+              <div class="flex items-center gap-2 text-xs text-slate-300 font-bold shrink-0">
+                <span>📅</span>
+                <span>${room.displayDate}</span>
+              </div>
+
+              <div class="flex items-center gap-1.5 justify-center shrink-0" id="countdown-${room.id}" data-date="${room.rawDate}">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+
+            <!-- Meta Details & Password -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs text-slate-400 border-t border-slate-800/80 pt-3 px-1 gap-2">
+              <div class="flex items-center gap-2">
+                <span>🛡️</span>
+                <span>${room.teamCount} Team${room.teamCount === 1 ? '' : 's'}</span>
+              </div>
+              <div>
+                <span class="text-[11px] text-yellow-400 bg-yellow-400/10 border border-yellow-400/20 px-2.5 py-1 rounded-lg font-mono">🔑 Pass: ${escapeHtml(room.adminPassword)}</span>
+              </div>
+            </div>
+
+            <!-- Action Navigation Buttons -->
+            <div class="grid grid-cols-2 gap-2 pt-1">
+              <a href="admin.html?room=${room.id}" target="_blank" class="bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-400 border border-yellow-400/30 text-center font-black text-xs py-2.5 rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5">
+                ⚙️ Admin Mode
+              </a>
+              <a href="room.html?room=${room.id}" target="_blank" class="bg-[#0b0f19] hover:bg-slate-900 border border-slate-800 text-slate-300 hover:text-white text-center font-black text-xs py-2.5 rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5">
+                👁️ View Room
+              </a>
             </div>
           </div>
-          <div class="press-actions flex items-center gap-2 w-full sm:w-auto justify-end">
-            <a href="admin.html?room=${room.id}" target="_blank" 
-               class="bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-400 border border-yellow-400/30 text-xs font-semibold px-2.5 py-1.5 rounded transition text-center">
-              ⚙️ Admin Mode
-            </a>
-            <a href="room.html?room=${room.id}" target="_blank" 
-               class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold px-2.5 py-1.5 rounded transition text-center">
-              👁️ View Room
-            </a>
-            <button class="delete-btn bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-semibold px-2.5 py-1.5 rounded transition" data-path="${room.path}" data-name="${escapeHtml(room.name)}">
-              🗑️ Delete
-            </button>
+        `;
+      });
+
+      updateCountdowns();
+    };
+
+    function updateCountdowns() {
+      const now = new Date();
+      const currentDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+      document.querySelectorAll('[id^="countdown-"]').forEach(el => {
+        const rawDate = el.getAttribute('data-date');
+        if (!rawDate) return;
+        
+        const parts = rawDate.split('-').map(Number);
+        if (parts.length < 3) return;
+        const [y, m, d] = parts;
+        const targetDateOnly = new Date(y, m - 1, d).getTime();
+
+        if (targetDateOnly < currentDateOnly) {
+          el.innerHTML = `
+            <div class="bg-slate-800/60 border border-slate-700 text-slate-400 text-xs font-black uppercase px-4 py-1.5 rounded-lg tracking-wider">
+              Finished
+            </div>
+          `;
+          return;
+        }
+
+        if (targetDateOnly === currentDateOnly) {
+          el.innerHTML = `
+            <div class="bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 text-xs font-black uppercase px-4 py-1.5 rounded-lg tracking-wider animate-pulse">
+              Happening Today
+            </div>
+          `;
+          return;
+        }
+
+        const targetDateTime = new Date(y, m - 1, d, 0, 0, 0).getTime();
+        const diff = targetDateTime - now.getTime();
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        const pad = (n) => String(n).padStart(2, '0');
+
+        const createFlipUnit = (value, label) => `
+          <div class="flex flex-col items-center">
+            <div class="bg-[#141d2f] border border-slate-700/80 rounded-lg px-2.5 py-1 text-sm font-mono font-black text-yellow-400 shadow-md">
+              ${pad(value)}
+            </div>
+            <span class="text-[9px] text-slate-400 uppercase mt-0.5 font-bold">${label}</span>
           </div>
         `;
 
-        itemEl.querySelector(".delete-btn").addEventListener("click", (e) => {
-          const path = e.currentTarget.getAttribute("data-path");
-          const roomName = e.currentTarget.getAttribute("data-name");
-          deleteRoom(path, roomName);
-        });
+        let html = '';
+        if (days > 0) {
+          html += createFlipUnit(days, 'Days');
+          html += `<span class="text-slate-600 font-black text-sm pb-4">:</span>`;
+        }
+        html += createFlipUnit(hours, 'Hrs');
+        html += `<span class="text-slate-600 font-black text-sm pb-4">:</span>`;
+        html += createFlipUnit(minutes, 'Min');
+        html += `<span class="text-slate-600 font-black text-sm pb-4">:</span>`;
+        html += createFlipUnit(seconds, 'Sec');
 
-        listContainer.appendChild(itemEl);
+        el.innerHTML = html;
       });
     }
 
-    function deleteRoom(path, roomName) {
+    window.filterRooms = function() {
+      const query = document.getElementById("search-input").value.toLowerCase();
+      const status = document.getElementById("status-filter").value;
+
+      const filtered = allRoomsCache.filter(room => {
+        const matchesQuery = room.name.toLowerCase().includes(query) || room.id.toLowerCase().includes(query);
+        const matchesStatus = status === 'all' || (status === 'live' && room.isLiveNow);
+        return matchesQuery && matchesStatus;
+      });
+
+      renderRoomsList(filtered);
+    };
+
+    window.deleteRoom = function(path, roomName) {
       const confirmDelete = confirm(`⚠️ ARE YOU SURE?\n\nThis will permanently delete "${roomName}" along with all its settings, teams, and match scores!`);
       if (!confirmDelete) return;
 
@@ -236,7 +363,6 @@
       });
     }
 
-    // Event listeners
     document.getElementById("auth-btn").addEventListener("click", loginSuperUser);
     document.getElementById("password-input").addEventListener("keypress", (e) => {
       if (e.key === "Enter") loginSuperUser();
