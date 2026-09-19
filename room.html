@@ -164,7 +164,7 @@
     const bracketsRef = ref(db, `${dbBasePath}/brackets`);
 
     let globalStreamUrl = "";
-    let totalRounds = 3;
+    let totalRounds = 5;
     let teamsData = [];
     let allBrackets = {};
     let roomAdminPassword = "admin";
@@ -172,7 +172,7 @@
     onValue(roomRef, (snapshot) => {
       const settings = snapshot.val();
       if (settings) {
-        totalRounds = parseInt(settings.roundsPerGame) || 3;
+        totalRounds = parseInt(settings.roundsPerGame) || 5;
         globalStreamUrl = settings.streamUrl || "";
         
         if (settings.adminPassword && settings.adminPassword.trim() !== "") {
@@ -193,7 +193,6 @@
         document.getElementById("room-subtitle").textContent = `Live Tournament Room: ${fallbackName}`;
       }
 
-      // Re-render brackets whenever room settings update totalRounds
       renderBracketsAndRankings();
     });
 
