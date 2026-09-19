@@ -192,6 +192,9 @@
         document.getElementById("room-header-title").textContent = fallbackName;
         document.getElementById("room-subtitle").textContent = `Live Tournament Room: ${fallbackName}`;
       }
+
+      // Re-render brackets whenever room settings update totalRounds
+      renderBracketsAndRankings();
     });
 
     window.promptAdminAccess = function() {
@@ -471,7 +474,7 @@
                   <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-2">
                     <div class="flex justify-between items-center text-[10px] border-b border-slate-900 pb-1">
                       <span class="font-black text-yellow-400">MATCH #${mIdx + 1}</span>
-                      <div class="flex items-center gap-1">
+                      <div class="flex items-center gap-1 overflow-x-auto">
                         ${headersHtml}
                       </div>
                     </div>
